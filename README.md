@@ -3,11 +3,22 @@
 version: 1.0  
 A Threshold Logic Unit C-runtime drop-in building block for a non-Von Neumann cpu model using MCP neurons.  
 
-## Downsides learned:
+## Downsides Learned
 
 **Performance Testing**  
 Any test that modifies its source registers will drift over multiple iterations.   
 We need a method that keeps operands stable while still measuring real execution speed.  
+
+## Performance Scaling Consistency
+
+| Iterations | ADD Ops/sec | MUL Ops/sec | Observed |
+|------------|-------------|-------------|-------------|
+| 100 | 34,795 | 13,891 | warm-up |
+| 1,000 | 36,948 | 15,000 | Stabilizing |
+| 5,000 | 36,335 | 15,030 | Stable |
+| 10,000 | 36,656 | 15,109 | Stable |
+| 50,000 | 36,546 | 15,027 | Stable |
+see performance log: [perf.txt](perf.txt)
 
 ## Files
 
