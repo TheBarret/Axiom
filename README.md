@@ -148,7 +148,7 @@ Step 4: `Sum = P_original XOR Carries[0..N-1]`
 | `OP_JMP` | 0xB | J | - | - | ADDR8 | PC = ADDR8 |
 | `OP_JZ` | 0xC | J-C | - | - | ADDR8 | if Z: PC = ADDR8 |
 | `OP_JNZ` | 0xD | J-C | - | - | ADDR8 | if !Z: PC = ADDR8 |
-| `OP_SYS` | 0xE | SYS | - | - | - | System call |
+| `OP_SYS` | 0xE | SYS | Used | Used | Used | System call |
 | `OP_HALT` | 0xF | SYS | - | - | - | Stop execution |
 
 **Flags**
