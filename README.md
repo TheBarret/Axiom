@@ -89,6 +89,27 @@ Step 4: `Sum = P_original XOR Carries[0..N-1]`
 | `OP_SYS` | 0xE | System Call | CPU operation (not ALU) | - |
 | `OP_HALT` | 0xF | Halt Execution | CPU operation (not ALU) | - |
 
+## Opcode Parameter Signatures
+
+| Opcode | Value | Format | RD | RS1 | RS2/IMM | Info |
+|--------|-------|--------|----|-----|---------|-------|
+| `OP_ADD` | 0x0 | R-R | Used | Used | Used | RD = RS1 + RS2 |
+| `OP_SUB` | 0x1 | R-R | Used | Used | Used | RD = RS1 - RS2 |
+| `OP_AND` | 0x2 | R-R | Used | Used | Used | RD = RS1 & RS2 |
+| `OP_OR` | 0x3 | R-R | Used | Used | Used | RD = RS1 \| RS2 |
+| `OP_XOR` | 0x4 | R-R | Used | Used | Used | RD = RS1 ^ RS2 |
+| `OP_MUL` | 0x5 | R-R | Used | Used | Used | RD = RS1 * RS2 |
+| `OP_CMP` | 0x6 | R-R | Unused | Used | Used | Sets FLAGS, no result |
+| `OP_LDI` | 0x7 | R-I | Used | - | IMM8 | RD = IMM8 |
+| `OP_LDI16`| 0x8 | R-I16 | Used | - | IMM16 | 2-word, RD = IMM16 |
+| `OP_LD` | 0x9 | R-M | Used | - | ADDR8 | RD = MEM[ADDR8] |
+| `OP_ST` | 0xA | M-R | Unused | Used | ADDR8 | MEM[ADDR8] = RS1 |
+| `OP_JMP` | 0xB | J | - | - | ADDR8 | PC = ADDR8 |
+| `OP_JZ` | 0xC | J-C | - | - | ADDR8 | if Z: PC = ADDR8 |
+| `OP_JNZ` | 0xD | J-C | - | - | ADDR8 | if !Z: PC = ADDR8 |
+| `OP_SYS` | 0xE | SYS | - | - | - | System call |
+| `OP_HALT` | 0xF | SYS | - | - | - | Stop execution |
+
 **Flags**
 
 | Flag | Abbr | Description | Set When |
