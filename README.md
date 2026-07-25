@@ -3,6 +3,15 @@
 version: 1.0  
 A Threshold Logic Unit (TLU) runtime, A C-runtime drop-in building block for a non-Von Neumann cpu model using MCP neurons.  
 
+## Files
+
+| File | Role |
+|------|------|
+| **gates.c** | McCulloch-Pitts neurons: AND, OR, NAND, NOR, NOT, XOR. All logic is computed via weighted sums + threshold. |
+| **adder.c** | Kogge-Stone parallel prefix adder. O(log N) carry propagation. |
+| **alu.c**   | ALU operations: ADD, SUB, MUL, AND, OR, XOR, CMP. All 80+ tests pass. Flags: Z, C, OV, L, G. |
+| **cpu.c**   | (TODO) 16-bit CPU, 16-registers, fetch-decode-execute with function-pointer dispatch. 16 instructions including SYS. |
+
 ## McCulloch–Pitts (MCP) neurons
 
 The artificial neuron was first proposed by Warren McCulloch and Walter Pitts in their 1943 paper,  
@@ -10,9 +19,38 @@ the `Threshold Logic Unit` (TLU) the simplest type of artificial neuron and bina
 functioning by multiplying inputs by weights, summing them, and outputting a `1`,  
 if the sum meets or exceeds a set threshold.   
 
-## Designing MCP Neuron Gates
+## Designing Neuron Gates
 
-TODO
+Each logic gate is implemented as an MCP neuron with specific weights and threshold values:  
+
+**AND gate:**  
+- Weights: [1.0, 1.0]
+- Threshold: 1.5
+- Outputs 1 only when both inputs are 1 (sum = 2.0)
+
+**OR gate:**
+- Weights: [1.0, 1.0]
+- Threshold: 0.5
+- Outputs 1 when at least one input is 1 (sum >= 1.0)
+
+**NAND gate:**
+- Weights: [-1.0, -1.0]
+- Threshold: -0.5
+- Outputs 1 except when both inputs are 1 (sum = -2.0)
+
+**NOR gate:**
+- Weights: [-1.0, -1.0]
+- Threshold: -1.5
+- Outputs 1 only when both inputs are 0 (sum = 0.0)
+
+**NOT gate:**
+- Weights: [-1.0]
+- Threshold: -0.5
+- Inverts the input: 1 -> 0, 0 -> 1
+
+**XOR gate:**
+- Implemented as a two-layer network: (A OR B) AND (NAND(A,B))
+- First layer computes OR and NAND, second layer ANDs them together
 
 ## Designing Adder Architecture
 
