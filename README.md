@@ -28,7 +28,8 @@ see performance log: [perf.txt](perf.txt)
 | **adder.c** | Kogge-Stone parallel prefix adder. O(log N) carry propagation. |
 | **alu.c**   | ALU operations with Flag bits: Z, C, OV, L, G. |
 | **ccel.c**   | Coincidence detection, CCEL memory storage. |
-| **cpu.c**   | (TODO) 16-bit ALU-harnass with bus accessed CCEL memory. |
+| **cpu.c**   | 16-bit ALU-harnass with bus accessed CCEL memory. |
+| **bus.c** | Owns CCEL memory instance, memory controller. |
 
 ## McCulloch–Pitts (MCP) neurons
 
