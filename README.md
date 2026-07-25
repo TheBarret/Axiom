@@ -1,7 +1,13 @@
 # Axiom
 
 version: 1.0  
-A Threshold Logic Unit (TLU) C-runtime drop-in building block for a non-Von Neumann cpu model using MCP neurons.  
+A Threshold Logic Unit C-runtime drop-in building block for a non-Von Neumann cpu model using MCP neurons.  
+
+## Downsides learned:
+
+**Performance Testing**  
+Any test that modifies its source registers will drift over multiple iterations.   
+We need a method that keeps operands stable while still measuring real execution speed.  
 
 ## Files
 
