@@ -169,8 +169,8 @@ void cpu_step(CPU* cpu) {
     cpu_decode(instr, &opcode, &rd, &rs1, &rs2, &imm);
 
     // DEBUG
-    printf("[PC=0x%04X] INSTR=0x%04X OP=%d RD=%d RS1=%d RS2=%d IMM=0x%02X\n",
-            cpu->PC-1, instr, opcode, rd, rs1, rs2, imm);
+    //printf("[PC=0x%04X] INSTR=0x%04X OP=%d RD=%d RS1=%d RS2=%d IMM=0x%02X\n",
+    //        cpu->PC-1, instr, opcode, rd, rs1, rs2, imm);
 
     uint16_t result = 0;
 
