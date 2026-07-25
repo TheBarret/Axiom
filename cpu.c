@@ -4,7 +4,7 @@
 #include <string.h>
 #include <assert.h>
 
-// --- Helpers ---
+// Helpers
 static void* xcalloc(size_t n, size_t size, const char* what) {
     void* p = calloc(n, size);
     if (!p) {
@@ -34,7 +34,7 @@ static ALUFlags flags_unpack(uint16_t packed) {
     return flags;
 }
 
-// --- Initialization ---
+// Initialization
 void cpu_init(CPU* cpu) {
     assert(cpu != NULL);
 
@@ -72,7 +72,7 @@ void cpu_free(CPU* cpu) {
     alu_free(&cpu->alu);
 }
 
-// --- Program Loading ---
+// Program Loading
 void cpu_load_program(CPU* cpu, const uint16_t* program, uint16_t size) {
     assert(cpu != NULL);
     assert(program != NULL);
@@ -90,7 +90,7 @@ void cpu_load_hex(CPU* cpu, const char* hex_string) {
     (void)hex_string;
 }
 
-// --- Register Access (with dirty tracking) ---
+// Register Access (with dirty tracking)
 uint16_t cpu_read_reg(CPU* cpu, uint8_t idx) {
     assert(idx < NUM_REGS);
     return cpu->R[idx];
@@ -134,7 +134,7 @@ void cpu_sync_all(CPU* cpu) {
     cpu_sync_registers(cpu);
 }
 
-// --- Instruction Fetch ---
+// Instruction Fetch
 static uint16_t cpu_fetch(CPU* cpu) {
     uint16_t instr = bus_read(&cpu->bus, cpu->PC);
     cpu->PC++;
@@ -143,7 +143,7 @@ static uint16_t cpu_fetch(CPU* cpu) {
     return instr;
 }
 
-// --- Instruction Decode ---
+// Instruction Decode
 static void cpu_decode(uint16_t instr, uint8_t* opcode, uint8_t* rd, uint8_t* rs1, uint8_t* rs2, uint16_t* imm) {
     *opcode = (instr >> 12) & 0xF;
     *rd = (instr >> 8) & 0xF;
@@ -152,7 +152,7 @@ static void cpu_decode(uint16_t instr, uint8_t* opcode, uint8_t* rd, uint8_t* rs
     *imm = instr & 0xFF;
 }
 
-// --- Execute One Instruction ---
+// Execute One Instruction
 void cpu_step(CPU* cpu) {
     if (cpu->halted) return;
 
@@ -172,42 +172,23 @@ void cpu_step(CPU* cpu) {
     //printf("[PC=0x%04X] INSTR=0x%04X OP=%d RD=%d RS1=%d RS2=%d IMM=0x%02X\n",
     //        cpu->PC-1, instr, opcode, rd, rs1, rs2, imm);
 
-    uint16_t result = 0;
-
     // 3. Execute
     switch (opcode) {
+        // ALU-family opcodes are routed through alu_forward().
+        // flag semantics (Z/C/OV/L/G) exactly match the spec table.
         case OP_ADD:
-            cpu->R[rd] = cpu->R[rs1] + cpu->R[rs2];
-            cpu->R_dirty[rd] = 1;
-            break;
-
         case OP_SUB:
-            cpu->R[rd] = cpu->R[rs1] - cpu->R[rs2];
-            cpu->R_dirty[rd] = 1;
-            break;
-
         case OP_AND:
-            cpu->R[rd] = cpu->R[rs1] & cpu->R[rs2];
-            cpu->R_dirty[rd] = 1;
-            break;
-
         case OP_OR:
-            cpu->R[rd] = cpu->R[rs1] | cpu->R[rs2];
-            cpu->R_dirty[rd] = 1;
-            break;
-
         case OP_XOR:
-            cpu->R[rd] = cpu->R[rs1] ^ cpu->R[rs2];
-            cpu->R_dirty[rd] = 1;
-            break;
-
-        case OP_MUL:
-            result = alu_forward(&cpu->alu, cpu->R[rs1], cpu->R[rs2], opcode);
+        case OP_MUL: {
+            uint16_t result = alu_forward(&cpu->alu, cpu->R[rs1], cpu->R[rs2], opcode);
             cpu->R[rd] = result;
             cpu->R_dirty[rd] = 1;
             cpu->flags = cpu->alu.flags;
             cpu->flags_dirty = 1;
             break;
+        }
 
         case OP_CMP:
             alu_forward(&cpu->alu, cpu->R[rs1], cpu->R[rs2], opcode);
@@ -221,10 +202,9 @@ void cpu_step(CPU* cpu) {
             break;
 
         case OP_LDI16: {
-            // 2-word instruction: fetch immediate
-            cpu->PC++;
-            cpu->PC_dirty = 1;
-            uint16_t imm16 = bus_read(&cpu->bus, cpu->PC);
+            // 2-word instruction: fetch immediate via cpu_fetch,
+            // PC advance and cycle accounting stay consistent
+            uint16_t imm16 = cpu_fetch(cpu);
             cpu->R[rd] = imm16;
             cpu->R_dirty[rd] = 1;
             break;
@@ -277,7 +257,7 @@ void cpu_step(CPU* cpu) {
     cpu->cycles++;
 }
 
-// --- Run Until HALT ---
+// Until HALT
 void cpu_run(CPU* cpu) {
     cpu->running = 1;
     while (cpu->running && !cpu->halted) {
@@ -286,7 +266,7 @@ void cpu_run(CPU* cpu) {
     cpu_sync_all(cpu);
 }
 
-// --- Reset ---
+// Reset
 void cpu_reset(CPU* cpu) {
     cpu->PC = BUS_PROGRAM_BASE;
     cpu->PC_dirty = 1;
@@ -304,7 +284,7 @@ void cpu_reset(CPU* cpu) {
     cpu_sync_all(cpu);
 }
 
-// --- Debug ---
+// Debug
 void cpu_dump_registers(CPU* cpu) {
     printf("Registers:\n");
     for (int i = 0; i < NUM_REGS; i++) {
