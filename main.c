@@ -4,12 +4,24 @@
 #include <assert.h>
 #include "gates.h"
 #include "adder.h"
+#include "cpu.h"
 
 /*
   Testers:
   - Gates
   - Adder
+  - Cpu
+  - Bus
+  - Memory
 */
+
+// Sample program: R1 = 5 + 3
+uint16_t test_program[] = {
+    0x7105,  // LDI R1, 5
+    0x7203,  // LDI R2, 3
+    0x0120,  // ADD R1, R1, R2
+    0xF000   // HALT
+};
 
 #define TEST_PASSED 0
 #define TEST_FAILED 1
@@ -55,9 +67,8 @@ void test_suite_summary(TestSuite* ts) {
         }
     }
 }
+
 // GATE TESTS
-
-
 
 void test_gate_forward_single() {
     TestSuite ts;
@@ -324,8 +335,27 @@ void test_adder_debug_output() {
     printf("Debug end\n");
 }
 
+void test_cpu() {
+    CPU cpu;
+    cpu_init(&cpu);
+
+    printf("Loading program...\n");
+    cpu_load_program(&cpu, test_program, 4);
+
+    printf("Initial state:\n");
+    cpu_dump_registers(&cpu);
+
+    printf("\nExecuting...\n");
+    cpu_run(&cpu);
+
+    printf("\nFinal state:\n");
+    cpu_dump_state(&cpu);
+
+    cpu_free(&cpu);
+}
+
 int main() {
-    printf("Testing: Axiom Gates...\n");
+    printf("* * Testing: Axiom Gates...\n");
 
     test_gate_forward_single();
     test_gate_init();
@@ -333,13 +363,16 @@ int main() {
     test_gate_forward_batched();
     test_xor_gate();
 
-    printf("Testing: Axiom Adders...\n");
+    printf("\n* * Testing: Axiom Adders...\n");
 
     test_adder_basic_operations();
     test_adder_with_carry_in();
     test_adder_bit_widths();
     test_adder_kogge_stone_carries();
     test_adder_debug_output();
+
+    printf("\n* * Testing: Axiom Cpu...\n");
+    test_cpu();
 
     printf("\nFinished!\n");
     return 0;

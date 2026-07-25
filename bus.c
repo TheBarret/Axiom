@@ -8,94 +8,100 @@
 static void* xcalloc(size_t n, size_t size, const char* what) {
     void* p = calloc(n, size);
     if (!p) {
-        fprintf(stderr, "Bus: allocation failed for %s (n=%zu, size=%zu)\n",
-                what, n, size);
+        fprintf(stderr, "Bus: allocation failed for %s\n", what);
         abort();
     }
     return p;
 }
 
-// --- Address Decoding ---
-void bus_decode_address(uint16_t addr, uint8_t* depth, uint8_t* row, uint8_t* col) {
-    *depth = (addr >> 8) & 0xFF;
-    *row = (addr >> 4) & 0xF;
-    *col = addr & 0xF;
-}
+static void bus_tick(Bus* bus) {
+    uint32_t row, col;
+    bus_addr_to_rowcol(bus->addr, &row, &col);
+    uint32_t idx = row * BUS_COLS + col;
 
-uint16_t bus_encode_address(uint8_t depth, uint8_t row, uint8_t col) {
-    return ((uint16_t)depth << 8) | ((uint16_t)row << 4) | col;
+    if (bus->rd) {
+        uint16_t word = 0;
+        for (int i = 0; i < BUS_DATA_BITS; i++) {
+            Ccel* cell = &bus->planes[i][idx];
+            CcelReadResult r = ccel_read(cell, 1, 1, 1);
+            if (r.state == CCEL_POSITIVE) {
+                word |= (1u << i);
+            }
+            // Restore after destructive read
+            ccel_refresh(cell, 1, 1, 1, r.state);
+        }
+        bus->data_in = word;
+    } else if (bus->wr) {
+        for (int i = 0; i < BUS_DATA_BITS; i++) {
+            Ccel* cell = &bus->planes[i][idx];
+            CcelState bit = (bus->data_out & (1u << i)) ? CCEL_POSITIVE : CCEL_NEGATIVE;
+            ccel_write(cell, 1, 1, 1, bit);
+        }
+    }
 }
 
 // --- Initialization ---
-void bus_init(Bus* bus, Ccel* memory, uint16_t size) {
+void bus_init(Bus* bus) {
     assert(bus != NULL);
-    assert(memory != NULL);
-    assert(size == BUS_MEMORY_SIZE);
 
-    bus->memory = memory;
-    bus->size = size;
-    bus->decode_cache.depth = 0;
-    bus->decode_cache.row = 0;
-    bus->decode_cache.col = 0;
+    memset(bus, 0, sizeof(Bus));
+
+    // Allocate one 256x256 grid per bit plane
+    uint32_t cells_per_plane = BUS_ROWS * BUS_COLS;
+    for (int i = 0; i < BUS_DATA_BITS; i++) {
+        bus->planes[i] = (Ccel*)xcalloc(cells_per_plane, sizeof(Ccel), "bus plane");
+        for (uint32_t r = 0; r < BUS_ROWS; r++) {
+            for (uint32_t c = 0; c < BUS_COLS; c++) {
+                ccel_init(&bus->planes[i][r * BUS_COLS + c], r, c);
+            }
+        }
+    }
+
+    bus->addr = 0;
+    bus->data_in = 0;
+    bus->data_out = 0;
+    bus->rd = 0;
+    bus->wr = 0;
 }
 
 void bus_free(Bus* bus) {
-    bus->memory = NULL;
-    bus->size = 0;
+    assert(bus != NULL);
+    for (int i = 0; i < BUS_DATA_BITS; i++) {
+        free(bus->planes[i]);
+        bus->planes[i] = NULL;
+    }
 }
 
 // --- Core Operations ---
 uint16_t bus_read(Bus* bus, uint16_t addr) {
     assert(bus != NULL);
-    assert(bus->memory != NULL);
     assert(bus_is_valid_addr(addr));
 
-    uint16_t value = 0;
-
-    for (int i = 0; i < BUS_DATA_BITS; i++) {
-        uint16_t core_addr = addr + i;
-        uint8_t depth, row, col;
-        bus_decode_address(core_addr, &depth, &row, &col);
-
-        CcelReadResult result = ccel_read(
-            &bus->memory[core_addr],
-            row, col, depth
-        );
-
-        if (result.status == CCEL_SELECTED && result.state == CCEL_POSITIVE) {
-            value |= (1 << i);
-        }
-    }
-
-    return value;
+    bus->addr = addr;
+    bus->rd = 1;
+    bus->wr = 0;
+    bus_tick(bus);
+    bus->rd = 0;
+    return bus->data_in;
 }
 
 void bus_write(Bus* bus, uint16_t addr, uint16_t value) {
     assert(bus != NULL);
-    assert(bus->memory != NULL);
     assert(bus_is_valid_addr(addr));
 
-    for (int i = 0; i < BUS_DATA_BITS; i++) {
-        uint16_t core_addr = addr + i;
-        uint8_t depth, row, col;
-        bus_decode_address(core_addr, &depth, &row, &col);
-
-        int bit = (value >> i) & 1;
-        CcelState state = bit ? CCEL_POSITIVE : CCEL_NEGATIVE;
-
-        ccel_write(
-            &bus->memory[core_addr],
-            row, col, depth,
-            state
-        );
-    }
+    bus->addr = addr;
+    bus->data_out = value;
+    bus->rd = 0;
+    bus->wr = 1;
+    bus_tick(bus);
+    bus->wr = 0;
 }
 
 void bus_read_block(Bus* bus, uint16_t addr, uint16_t* buffer, uint16_t words) {
     assert(bus != NULL);
     assert(buffer != NULL);
     assert(bus_is_valid_addr(addr));
-    assert(addr + words <= BUS_MEMORY_SIZE / BUS_DATA_BITS);
+    assert(addr + words <= BUS_ROWS * BUS_COLS);
 
     for (uint16_t i = 0; i < words; i++) {
         buffer[i] = bus_read(bus, addr + i);
@@ -106,14 +112,14 @@ void bus_write_block(Bus* bus, uint16_t addr, const uint16_t* buffer, uint16_t w
     assert(bus != NULL);
     assert(buffer != NULL);
     assert(bus_is_valid_addr(addr));
-    assert(addr + words <= BUS_MEMORY_SIZE / BUS_DATA_BITS);
+    assert(addr + words <= BUS_ROWS * BUS_COLS);
 
     for (uint16_t i = 0; i < words; i++) {
         bus_write(bus, addr + i, buffer[i]);
     }
 }
 
-// --- System Variable Access ---
+// --- System Variables ---
 uint16_t bus_read_sysvar(Bus* bus, uint8_t idx) {
     assert(bus != NULL);
     assert(idx < BUS_SYSVAR_COUNT);
@@ -206,22 +212,9 @@ void bus_clear(Bus* bus, uint16_t start, uint16_t words) {
 
 void bus_dump_sysvars(Bus* bus) {
     printf("System Variables:\n");
-    printf("  R0:  0x%04X\n", bus_read_sysvar(bus, 0));
-    printf("  R1:  0x%04X\n", bus_read_sysvar(bus, 1));
-    printf("  R2:  0x%04X\n", bus_read_sysvar(bus, 2));
-    printf("  R3:  0x%04X\n", bus_read_sysvar(bus, 3));
-    printf("  R4:  0x%04X\n", bus_read_sysvar(bus, 4));
-    printf("  R5:  0x%04X\n", bus_read_sysvar(bus, 5));
-    printf("  R6:  0x%04X\n", bus_read_sysvar(bus, 6));
-    printf("  R7:  0x%04X\n", bus_read_sysvar(bus, 7));
-    printf("  R8:  0x%04X\n", bus_read_sysvar(bus, 8));
-    printf("  R9:  0x%04X\n", bus_read_sysvar(bus, 9));
-    printf("  R10: 0x%04X\n", bus_read_sysvar(bus, 10));
-    printf("  R11: 0x%04X\n", bus_read_sysvar(bus, 11));
-    printf("  R12: 0x%04X\n", bus_read_sysvar(bus, 12));
-    printf("  R13: 0x%04X\n", bus_read_sysvar(bus, 13));
-    printf("  R14: 0x%04X\n", bus_read_sysvar(bus, 14));
-    printf("  R15: 0x%04X\n", bus_read_sysvar(bus, 15));
+    for (int i = 0; i < 16; i++) {
+        printf("  R%-2d: 0x%04X\n", i, bus_read_sysvar(bus, i));
+    }
     printf("  PC:  0x%04X\n", bus_read_pc(bus));
     printf("  SP:  0x%04X\n", bus_read_sp(bus));
     printf("  IR:  0x%04X\n", bus_read_ir(bus));

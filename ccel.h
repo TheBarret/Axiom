@@ -22,78 +22,39 @@ typedef struct {
 } CcelReadResult;
 
 typedef struct {
-    // Selection weights (pure coincident detection)
     float w_row;
     float w_col;
     float w_depth;
     float bias;
 
-    // The 3-state core
     CcelState state;
 
-    // 64-bit address to avoid packing collisions
     uint64_t address;
-
-    // Metadata (diagnostic only)
     uint32_t row_idx;
     uint32_t col_idx;
     uint32_t depth_idx;
     uint64_t access_count;
     uint64_t last_access_time;
 
-    // UNTESTED: Future hysteretic mode
-    // When non-zero, selection becomes content-dependent.
-    // Experimental purpose
-    // Default: 0.0
     float w_feedback_reserved;
 } Ccel;
 
 // --- Initialization ---
 void ccel_init(Ccel* n, uint32_t row, uint32_t col);
 void ccel_init_3d(Ccel* n, uint32_t row, uint32_t col, uint32_t depth);
-void ccel_init_custom(Ccel* n,
-                           float w_row, float w_col,
-                           float w_depth,
-                           float bias);
+void ccel_init_custom(Ccel* n, float w_row, float w_col, float w_depth, float bias);
 
 // --- Core Operations ---
-CcelSelection ccel_activate(const Ccel* n,
-                                       int row_signal,
-                                       int col_signal,
-                                       int depth_signal);
-
-CcelReadResult ccel_read(Ccel* n,
-                                    int row_signal,
-                                    int col_signal,
-                                    int depth_signal);
-
-void ccel_write(Ccel* n,
-                     int row_signal,
-                     int col_signal,
-                     int depth_signal,
-                     CcelState new_state);
-
-void ccel_refresh(Ccel* n,
-                       int row_signal,
-                       int col_signal,
-                       int depth_signal,
-                       CcelState saved_state);
-
-// --- Debug/Diagnostic (Non-destructive) ---
-static inline CcelState ccel_peek(const Ccel* n) {
-    return n->state;  // Safe: no side effects
-}
-
-static inline uint64_t ccel_get_address(const Ccel* n) {
-    return n->address;
-}
+CcelSelection ccel_activate(const Ccel* n, int row_signal, int col_signal, int depth_signal);
+CcelReadResult ccel_read(Ccel* n, int row_signal, int col_signal, int depth_signal);
+void ccel_write(Ccel* n, int row_signal, int col_signal, int depth_signal, CcelState new_state);
+void ccel_refresh(Ccel* n, int row_signal, int col_signal, int depth_signal, CcelState saved_state);
 
 // --- Convenience ---
-void ccel_erase(Ccel* n,
-                     int row_signal,
-                     int col_signal,
-                     int depth_signal);
+static inline CcelState ccel_peek(const Ccel* n) { return n->state; }
+static inline uint64_t ccel_get_address(const Ccel* n) { return n->address; }
 
+void ccel_erase(Ccel* n, int row_signal, int col_signal, int depth_signal);
 void ccel_reset_stats(Ccel* n);
 const char* ccel_state_to_string(CcelState state);
 
