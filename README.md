@@ -68,6 +68,85 @@ Step 3: `Carries = [cin, G[0], G[1], ..., G[N-1]]`
 
 Step 4: `Sum = P_original XOR Carries[0..N-1]`  
 
+## Designing Opcodes
+
+| Opcode | Value | Operation | Description | Flags Set |
+|--------|-------|-----------|-------------|-----------|
+| `OP_ADD` | 0x0 | `A + B` | Addition | Z, C, OV |
+| `OP_SUB` | 0x1 | `A - B` | Subtraction | Z, C, OV |
+| `OP_AND` | 0x2 | `A & B` | Bitwise AND | Z |
+| `OP_OR` | 0x3 | `A \| B` | Bitwise OR | Z |
+| `OP_XOR` | 0x4 | `A ^ B` | Bitwise XOR | Z |
+| `OP_MUL` | 0x5 | `A * B` | Multiplication (low `bits` bits) | Z, OV |
+| `OP_CMP` | 0x6 | Compare `A` vs `B` | Sets flags only (no result) | Z, L, G |
+| `OP_LDI` | 0x7 | Load Immediate | CPU operation (not ALU) | - |
+| `OP_LDI16` | 0x8 | Load 16-bit Immediate | CPU operation (not ALU) | - |
+| `OP_LD` | 0x9 | Load from Memory | CPU operation (not ALU) | - |
+| `OP_ST` | 0xA | Store to Memory | CPU operation (not ALU) | - |
+| `OP_JMP` | 0xB | Unconditional Jump | CPU operation (not ALU) | - |
+| `OP_JZ` | 0xC | Jump if Zero | CPU operation (not ALU) | - |
+| `OP_JNZ` | 0xD | Jump if Not Zero | CPU operation (not ALU) | - |
+| `OP_SYS` | 0xE | System Call | CPU operation (not ALU) | - |
+| `OP_HALT` | 0xF | Halt Execution | CPU operation (not ALU) | - |
+
+**Flags**
+
+| Flag | Abbr | Description | Set When |
+|------|------|-------------|----------|
+| **Z** | Zero | Result is zero | All ops except CMP set Z based on result |
+| **C** | Carry | Carry/Borrow out | ADD (carry), SUB (borrow) |
+| **OV** | Overflow | Signed overflow | ADD, SUB, MUL (product doesn't fit) |
+| **L** | Less | Comparison less-than | CMP only (signed/unsigned mode) |
+| **G** | Greater | Comparison greater-than | CMP only (signed/unsigned mode) |
+
+**ADD**
+- `Z` = (result == 0)
+- `C` = carry-out from most significant bit
+- `OV` = `carries[bits] ^ carries[bits-1]` (signed overflow detection)
+
+**SUB**
+- `Z` = (result == 0)
+- `C` = borrow (inverse of carry-out)
+- `OV` = `carries[bits] ^ carries[bits-1]`
+
+**MUL**
+- `Z` = (result == 0)
+- `OV` = product > `(1<<bits) - 1` (doesn't fit in width)
+
+**CMP**
+- `Z` = (A == B)
+- `L` = (A < B) (signed or unsigned depending on mode)
+- `G` = (A > B) (signed or unsigned depending on mode)
+- **Result register = 0**
+
+**AND, OR, XOR**
+- `Z` = (result == 0)
+- All other flags = 0
+
+**Signed vs Unsigned Comparison**
+
+Default: **signed** (`cmp_signed = 1`)
+
+- **Signed mode**: L uses `sign(A-B) XOR overflow(A-B)` (standard SLT idiom)
+- **Unsigned mode**: L uses borrow from subtraction
+
+Set via `alu_set_cmp_mode(alu, is_signed)`:
+```c
+alu_set_cmp_mode(&alu, 1);  // signed (default)
+alu_set_cmp_mode(&alu, 0);  // unsigned
+```
+
+**CPU Operations (Not ALU)***
+
+The following opcodes are defined for the CPU but don't execute in the ALU:
+- `OP_LDI`, `OP_LDI16` - Immediate loads
+- `OP_LD`, `OP_ST` - Memory access
+- `OP_JMP`, `OP_JZ`, `OP_JNZ` - Control flow
+- `OP_SYS` - System call
+- `OP_HALT` - Stop execution
+
+These will be handled by the CPU control logic when `cpu.c` is implemented.
+
 ## CCEL Memory
 
 Using 1950s magnetic-core memory mechanics and McCulloch-Pitts (MCP) threshold logic for memory.  
