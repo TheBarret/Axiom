@@ -9,6 +9,26 @@ A Threshold Logic Unit C-runtime drop-in building block for a non-Von Neumann cp
 Any test that modifies its source registers will drift over multiple iterations.   
 We need a method that keeps operands stable while still measuring real execution speed.  
 
+**3D addressing bit overlap**  
+`ccel_init_3d` builds the address as `depth<<48 | row<<32 | col`.  
+Depth starts at bit 48, but row occupies bits 32-47, only 16 bits before it collides with depth.  
+Any `row` value above 65535 will bleed into the depth field and corrupt addressing.  
+If rows are expected to stay small (e.g. a modest grid, fixed 16/16/32 split enforced by masking, not just shifting).
+
+**Strict `>` vs `>=` on the threshold**  
+With the default weights, sums land on {-1.5, -0.5, 0.5, 1.5}, never exactly 0.0, so `linear > SELECTION_THRESHOLD` is safe.  
+But `ccel_init_custom` lets a caller pick arbitrary weights/bias, and it's easy to construct a combination where `linear == 0.0` exactly.  
+Right now that resolves to `CCEL_UNSELECTED`. Worth deciding explicitly whether boundary-exact activation should select or not,  
+since custom weights are clearly meant to be used (the function exists for a reason) and this edge case will eventually get hit.  
+
+**Signal validation**  
+Relies on `assert`, `row_signal`/`col_signal`/`depth_signal` are checked with `assert(x == 0 || x == 1)`.  
+If this is ever built with `NDEBUG` (a normal release-mode define), those checks vanish silently,  
+and an out-of-range signal (e.g. `2`) would just get multiplied into the linear sum as any other float,  
+no crash, but a quiet departure from the binary-signal model the whole neuron abstraction depends on.  
+If malformed input is possible from upstream (bus.c driving these lines),  
+you may want an explicit runtime check that survives `NDEBUG`, rather than one that only exists in debug builds.  
+
 ## Performance Scaling Consistency
 
 | Iterations | ADD Ops/sec | MUL Ops/sec | Observed |
