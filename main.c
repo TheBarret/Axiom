@@ -15,11 +15,27 @@
   - Memory
 */
 
-// Sample program: R1 = 5 + 3
+// Test program
 uint16_t test_program[] = {
+    // Load test values
     0x7105,  // LDI R1, 5
     0x7203,  // LDI R2, 3
-    0x0120,  // ADD R1, R1, R2
+    0x7307,  // LDI R3, 7
+    // ADD: R0 = R1 + R2 = 5 + 3 = 8
+    0x0012,  // ADD R0, R1, R2
+    // SUB: R0 = R0 - R2 = 8 - 3 = 5
+    0x1102,  // SUB R0, R0, R2
+    // AND: R0 = R0 & R3 = 5 & 7 = 5
+    0x2103,  // AND R0, R0, R3
+    // OR:  R0 = R0 | R2 = 5 | 3 = 7
+    0x3102,  // OR  R0, R0, R2
+    // XOR: R0 = R0 ^ R3 = 7 ^ 7 = 0
+    0x4103,  // XOR R0, R0, R3
+    // MUL: R0 = R1 * R2 = 5 * 3 = 15
+    0x5012,  // MUL R0, R1, R2
+    // CMP: Compare R0 (15) vs R3 (7)
+    0x6103,  // CMP R0, R3   (flags: Z=0, L=0, G=1)
+    // HALT
     0xF000   // HALT
 };
 
@@ -340,7 +356,7 @@ void test_cpu() {
     cpu_init(&cpu);
 
     printf("Loading program...\n");
-    cpu_load_program(&cpu, test_program, 4);
+    cpu_load_program(&cpu, test_program, sizeof(test_program) / sizeof(uint16_t));
 
     printf("Initial state:\n");
     cpu_dump_registers(&cpu);
