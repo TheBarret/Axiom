@@ -1,0 +1,62 @@
+═══════════════════════════════════════════════════════════════════
+  AXIOM DRY ALU PERFORMANCE TEST (Ops/sec per instruction)
+═══════════════════════════════════════════════════════════════════
+
+Warming up...
+  ADD      |      100 ops |    0.003 sec |      35112 ops/sec
+
+─── ADD ───
+  ADD      |      100 ops |    0.003 sec |      34795 ops/sec
+  ADD      |     1000 ops |    0.027 sec |      36948 ops/sec
+  ADD      |     5000 ops |    0.138 sec |      36335 ops/sec
+  ADD      |    10000 ops |    0.273 sec |      36656 ops/sec
+  ADD      |    50000 ops |    1.368 sec |      36546 ops/sec
+
+─── SUB ───
+  SUB      |      100 ops |    0.003 sec |      33591 ops/sec
+  SUB      |     1000 ops |    0.027 sec |      36437 ops/sec
+  SUB      |     5000 ops |    0.137 sec |      36463 ops/sec
+  SUB      |    10000 ops |    0.273 sec |      36590 ops/sec
+  SUB      |    50000 ops |    1.370 sec |      36494 ops/sec
+
+─── AND ───
+  AND      |      100 ops |    0.003 sec |      33875 ops/sec
+  AND      |     1000 ops |    0.027 sec |      36813 ops/sec
+  AND      |     5000 ops |    0.139 sec |      36009 ops/sec
+  AND      |    10000 ops |    0.275 sec |      36395 ops/sec
+  AND      |    50000 ops |    1.373 sec |      36412 ops/sec
+
+─── OR ───
+  OR       |      100 ops |    0.003 sec |      34200 ops/sec
+  OR       |     1000 ops |    0.026 sec |      37736 ops/sec
+  OR       |     5000 ops |    0.137 sec |      36584 ops/sec
+  OR       |    10000 ops |    0.276 sec |      36194 ops/sec
+  OR       |    50000 ops |    1.365 sec |      36637 ops/sec
+
+─── XOR ───
+  XOR      |      100 ops |    0.003 sec |      35088 ops/sec
+  XOR      |     1000 ops |    0.027 sec |      37502 ops/sec
+  XOR      |     5000 ops |    0.137 sec |      36464 ops/sec
+  XOR      |    10000 ops |    0.274 sec |      36525 ops/sec
+  XOR      |    50000 ops |    1.370 sec |      36490 ops/sec
+
+─── MUL ───
+  MUL      |      100 ops |    0.007 sec |      13891 ops/sec
+  MUL      |     1000 ops |    0.067 sec |      15000 ops/sec
+  MUL      |     5000 ops |    0.333 sec |      15030 ops/sec
+  MUL      |    10000 ops |    0.662 sec |      15109 ops/sec
+  MUL      |    50000 ops |    3.327 sec |      15027 ops/sec
+
+─── CMP ───
+  CMP      |      100 ops |    0.007 sec |      14821 ops/sec
+  CMP      |     1000 ops |    0.066 sec |      15139 ops/sec
+  CMP      |     5000 ops |    0.330 sec |      15164 ops/sec
+  CMP      |    10000 ops |    0.664 sec |      15051 ops/sec
+  CMP      |    50000 ops |    3.317 sec |      15074 ops/sec
+
+─── LDI ───
+  LDI      |      100 ops |    0.003 sec |      34626 ops/sec
+  LDI      |     1000 ops |    0.027 sec |      36839 ops/sec
+  LDI      |     5000 ops |    0.139 sec |      35990 ops/sec
+  LDI      |    10000 ops |    0.274 sec |      36555 ops/sec
+  LDI      |    50000 ops |    1.386 sec |      36074 ops/sec
