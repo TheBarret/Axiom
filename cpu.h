@@ -16,8 +16,8 @@ typedef struct {
     uint16_t IR;
     ALUFlags flags;
 
-    // Memory fabric (bus owns the CCEL planes)
-    Bus bus;               // ← memory is INSIDE the bus now
+    // Memory (bus owns the CCEL planes)
+    Bus bus;
 
     // ALU
     ALU alu;

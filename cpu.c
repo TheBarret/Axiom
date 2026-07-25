@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "syscalls.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -174,8 +175,7 @@ void cpu_step(CPU* cpu) {
 
     // 3. Execute
     switch (opcode) {
-        // ALU-family opcodes are routed through alu_forward().
-        // flag semantics (Z/C/OV/L/G) exactly match the spec table.
+        // ALU-family opcodes: all routed through alu_forward().
         case OP_ADD:
         case OP_SUB:
         case OP_AND:
@@ -202,8 +202,10 @@ void cpu_step(CPU* cpu) {
             break;
 
         case OP_LDI16: {
-            // 2-word instruction: fetch immediate via cpu_fetch,
-            // PC advance and cycle accounting stay consistent
+            // 2-word instruction: fetch immediate via cpu_fetch so PC
+            // advance and cycle accounting stay consistent with every
+            // other fetch path (previously this was hand-rolled and
+            // silently skipped the cycle increment).
             uint16_t imm16 = cpu_fetch(cpu);
             cpu->R[rd] = imm16;
             cpu->R_dirty[rd] = 1;
@@ -238,9 +240,53 @@ void cpu_step(CPU* cpu) {
             }
             break;
 
-        case OP_SYS:
-            // System call (TODO)
+        case OP_SYS: {
+            // rs1 = syscall ID, rd = data register
+            uint8_t sys_id = rs1;
+
+            switch (sys_id) {
+                case SYS_PUTC:
+                    putchar((int)(cpu->R[rd] & 0xFF));
+                    break;
+
+                case SYS_GETC: {
+                    int c = getchar();
+                    cpu->R[rd] = (c == EOF) ? SYS_EOF_SENTINEL : (uint16_t)(c & 0xFF);
+                    cpu->R_dirty[rd] = 1;
+                    break;
+                }
+
+                case SYS_PUTN:
+                    printf("%u", (unsigned)cpu->R[rd]);
+                    break;
+
+                case SYS_PUTS: {
+                    // One character per bus word, terminated by a 0 word
+                    uint16_t addr = cpu->R[rd];
+                    uint16_t ch;
+                    while ((ch = bus_read(&cpu->bus, addr)) != 0) {
+                        putchar((int)(ch & 0xFF));
+                        addr++;
+                    }
+                    break;
+                }
+
+                case SYS_EXIT: // TODO: exit with code
+                    cpu->halted = 1;
+                    cpu->running = 0;
+                    break;
+
+                case SYS_FLUSH:
+                    fflush(stdout);
+                    break;
+
+                default:
+                    fprintf(stderr, "CPU: Unknown syscall 0x%X at PC=0x%04X\n",
+                            sys_id, cpu->PC);
+                    break;
+            }
             break;
+        }
 
         case OP_HALT:
             cpu->halted = 1;
@@ -257,7 +303,7 @@ void cpu_step(CPU* cpu) {
     cpu->cycles++;
 }
 
-// Until HALT
+// Run Until HALT
 void cpu_run(CPU* cpu) {
     cpu->running = 1;
     while (cpu->running && !cpu->halted) {

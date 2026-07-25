@@ -4,9 +4,9 @@
 #include <assert.h>
 #include <stdio.h>
 
-// =====================================================================
+
 // HELPERS
-// =====================================================================
+
 
 static inline void int_to_bits(uint64_t val, int bits, int* out) {
     for (int i = 0; i < bits; i++) {
@@ -56,9 +56,9 @@ static int gate_reduce_or(const Gate* or_gate, int* buf, int n) {
     return buf[0];
 }
 
-// =====================================================================
+
 // SUBTRACTOR
-// =====================================================================
+
 
 void subtractor_init(Subtractor* sub, int bits) {
     sub->bits = bits;
@@ -98,9 +98,9 @@ int subtractor_forward(Subtractor* sub, uint64_t A, uint64_t B, uint64_t* result
     return carry ? 0 : 1; // borrow is the inverse of carry-out
 }
 
-// =====================================================================
+
 // MULTIPLIER (Shift-and-Add, constant-time)
-// =====================================================================
+
 
 void multiplier_init(SAMultiplier* mul, int bits) {
     mul->bits = bits;
@@ -158,9 +158,9 @@ uint64_t multiplier_forward(SAMultiplier* mul, uint64_t A, uint64_t B) {
     return result & mul->full_mask;
 }
 
-// =====================================================================
+
 // BITWISE LOGIC
-// =====================================================================
+
 
 void bitwise_init(BitWiseLogic* bw, int bits, int gate_type) {
     bw->bits = bits;
@@ -203,9 +203,9 @@ uint64_t bitwise_forward(BitWiseLogic* bw, uint64_t A, uint64_t B) {
     return bits_to_int(bw->result_bits, bw->bits);
 }
 
-// =====================================================================
+
 // COMPARATOR
-// =====================================================================
+
 
 void comparator_init(Comparator* cmp, int bits) {
     cmp->bits = bits;
@@ -240,9 +240,8 @@ CmpResult comparator_forward(Comparator* cmp, uint64_t A, uint64_t B) {
     return res;
 }
 
-// =====================================================================
+
 // ALU
-// =====================================================================
 
 void alu_init(ALU* alu, int bits) {
     alu->bits = bits;
@@ -276,18 +275,7 @@ void alu_set_cmp_mode(ALU* alu, int is_signed) {
 
 uint64_t alu_forward(ALU* alu, uint64_t A, uint64_t B, Opcode op) {
     int bits = alu->bits;
-
-    // All operations computed every call, unconditionally (compute-all,
-    // mux-select) -- this is the honest model of combinational hardware,
-    // where every functional unit's gates switch every cycle regardless
-    // of which result actually gets latched. See prior discussion for
-    // why this is a deliberate tradeoff (constant latency, no timing
-    // side channel from *which op* was requested), not an oversight --
-    // and why real parallel-hardware "profit" from this pattern would
-    // require batching/SIMD across the units, not the sequential calls
-    // below. This pass fixes the parts that broke the constant-time
-    // property (comparator's scan, multiplier's skip-branch) without
-    // yet doing the bigger batching rewrite.
+    // All operations computed every call, unconditionally (compute-all mux-select)
 
     uint64_t add_result = 0;
     int add_carry = adder_forward(&alu->adder, A, B, 0, &add_result);
