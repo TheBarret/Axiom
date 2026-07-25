@@ -10,6 +10,7 @@ A Threshold Logic Unit (TLU) runtime, A C-runtime drop-in building block for a n
 | **gates.c** | McCulloch-Pitts neurons: AND, OR, NAND, NOR, NOT, XOR. All logic is computed via weighted sums + threshold. |
 | **adder.c** | Kogge-Stone parallel prefix adder. O(log N) carry propagation. |
 | **alu.c**   | ALU operations with Flag bits: Z, C, OV, L, G. |
+| **ccel.c**   | Coincidence detection, CCEL memory storage. |
 | **cpu.c**   | (TODO) 16-bit ALU-harnass with bus accessed CCEL memory. |
 
 ## McCulloch–Pitts (MCP) neurons
