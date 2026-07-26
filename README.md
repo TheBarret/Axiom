@@ -1,7 +1,13 @@
 # Axiom
 
 ### The MCP Neuron Foundation
-Every logic gate in the system is built from MCP neurons:
+
+The artificial neuron was first proposed by Warren McCulloch and Walter Pitts in their 1943 paper,  
+the `Threshold Logic Unit` (TLU) the simplest type of artificial neuron and binary classifier,  
+functioning by multiplying inputs by weights, summing them, and outputting a `1`,  
+if the sum meets or exceeds a set threshold.   
+
+In the Axiom framework, every logic gate in the system is built from MCP neurons:
 - **Inputs** are multiplied by weights and summed with a bias
 - **Output** is 1 if the sum meets or exceeds a threshold, otherwise 0
 - Logic gates (AND, OR, NAND, NOR, NOT, XOR) are constructed using specific weight/threshold combinations
@@ -68,13 +74,6 @@ see performance log: [perf.txt](perf.txt)
 | **ccel.c**   | Coincidence detection, CCEL memory storage. |
 | **cpu.c**   | 16-bit ALU-harnass with bus accessed CCEL memory. |
 | **bus.c** | Owns CCEL memory instance, memory controller. |
-
-## McCulloch–Pitts (MCP) neurons
-
-The artificial neuron was first proposed by Warren McCulloch and Walter Pitts in their 1943 paper,  
-the `Threshold Logic Unit` (TLU) the simplest type of artificial neuron and binary classifier,  
-functioning by multiplying inputs by weights, summing them, and outputting a `1`,  
-if the sum meets or exceeds a set threshold.   
 
 ## Designing Neuron Gates
 
@@ -255,3 +254,75 @@ a core only flips or reads if all specified coordinate lines carry active signal
 The `cell_read` function captures the state and immediately resets `n->state = cell_NEUTRAL;`,  
 authentically replicating the physical property of magnetic core memory where reading a core clears its magnetic polarization to zero,  
 requiring an immediate write-back or refresh cycle.
+
+# Testing Sample codes
+
+Sample program:
+```asm
+   // Test program
+   uint16_t test_program[] = {
+       // Load test values
+       0x7105,  // LDI R1, 5
+       0x7203,  // LDI R2, 3
+       0x7307,  // LDI R3, 7
+       // ADD: R0 = R1 + R2 = 5 + 3 = 8
+       0x0012,  // ADD R0, R1, R2
+       // SUB: R0 = R0 - R2 = 8 - 3 = 5
+       0x1102,  // SUB R0, R0, R2
+       // AND: R0 = R0 & R3 = 5 & 7 = 5
+       0x2103,  // AND R0, R0, R3
+       // OR:  R0 = R0 | R2 = 5 | 3 = 7
+       0x3102,  // OR  R0, R0, R2
+       // XOR: R0 = R0 ^ R3 = 7 ^ 7 = 0
+       0x4103,  // XOR R0, R0, R3
+       // MUL: R0 = R1 * R2 = 5 * 3 = 15
+       0x5012,  // MUL R0, R1, R2
+       // CMP: Compare R0 (15) vs R3 (7)
+       0x6103,  // CMP R0, R3   (flags: Z=0, L=0, G=1)
+       // HALT
+       0xF000   // HALT
+   };
+```
+
+Sample debug data:
+```text
+   Executing...
+   
+   Final state:
+   Registers:
+     R0 : 0x002D (   45)
+     R1 : 0x000F (   15)
+     R2 : 0x0003 (    3)
+     R3 : 0x0007 (    7)
+     R4 : 0x0000 (    0)
+     R5 : 0x0000 (    0)
+     R6 : 0x0000 (    0)
+     R7 : 0x0000 (    0)
+     R8 : 0x0000 (    0)
+     R9 : 0x0000 (    0)
+     R10: 0x0000 (    0)
+     R11: 0x0000 (    0)
+     R12: 0x0000 (    0)
+     R13: 0x0000 (    0)
+     R14: 0x0000 (    0)
+     R15: 0x0000 (    0)
+     PC:  0x000B 
+     SP:  0x4000 
+     IR:  0xF000
+   Flags: Z=0 C=0 OV=0 L=0 G=1 
+   Cycles: 22
+   State: HALTED
+   
+   Memory Dump (at PC offset):
+   Bus Dump: addr=0x0007, words=8
+     Addr  |  Data (hex) | Data (bin)
+     ------+-------------+-----------
+     0x0007 | 0x4103     | 0100 0001 0000 0011
+     0x0008 | 0x5012     | 0101 0000 0001 0010
+     0x0009 | 0x6103     | 0110 0001 0000 0011
+     0x000A | 0xF000     | 1111 0000 0000 0000
+     0x000B | 0x0000     | 0000 0000 0000 0000
+     0x000C | 0x0000     | 0000 0000 0000 0000
+     0x000D | 0x0000     | 0000 0000 0000 0000
+     0x000E | 0x0000     | 0000 0000 0000 0000
+```
