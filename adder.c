@@ -78,7 +78,9 @@ static void compute_carries_kogge_stone(Adder* adder, int cin) {
     int* carries = adder->carries;
 
     // Inject carry-in
-    G_curr[0] = G_curr[0] | (P_curr[0] & cin);
+    //G_curr[0] = G_curr[0] | (P_curr[0] & cin);
+    int p_and_cin = gate_forward_single(&adder->and_gate, P_curr[0], cin);
+    G_curr[0] = gate_forward_single(&adder->or_gate, G_curr[0], p_and_cin);
 
     int stride = 1;
     while (stride < N) {
