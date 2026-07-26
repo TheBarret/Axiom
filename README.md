@@ -12,6 +12,40 @@ In the Axiom framework, every logic gate in the system is built from MCP neurons
 - **Output** is 1 if the sum meets or exceeds a threshold, otherwise 0
 - Logic gates (AND, OR, NAND, NOR, NOT, XOR) are constructed using specific weight/threshold combinations
 
+## Solving the XOR Problem
+
+The XOR function is famously not linearly separable, meaning it cannot be solved by a single McCulloch-Pitts neuron (a single threshold unit).  
+To overcome this limitation, the Axiom project implements XOR as a **two-layer MCP neural network**.  
+
+**Workflow:**
+```
+Input (A, B) → Layer 1 → Layer 2 → Output
+                ↓           ↓
+              OR gate    NAND gate
+                ↓           ↓
+                └─── AND ───┘
+```
+
+**Layer 1: Compute Intermediate Functions**
+- **OR gate**: Outputs 1 when A=1 or B=1 (or both)
+- **NAND gate**: Outputs 1 except when both A=1 and B=1
+
+**Both gates are standard MCP neurons with specific weight/threshold configurations:**
+- OR: weights `[1.0, 1.0]`, threshold `0.5` → fires when sum ≥ 1.0
+- NAND: weights `[-1.0, -1.0]`, threshold `-0.5` → fires except when sum = -2.0
+
+**Layer 2: Combine with AND**
+The final layer uses an AND gate that takes the outputs from Layer 1:
+- **AND gate**: weights `[1.0, 1.0]`, threshold `1.5`
+
+**Truth Table Verification**
+| A | B | OR | NAND | OR AND NAND | XOR |
+|---|---|----|------|-------------|-----|
+| 0 | 0 | 0  | 1    | 0           | 0   |
+| 0 | 1 | 1  | 1    | 1           | 1   |
+| 1 | 0 | 1  | 1    | 1           | 1   |
+| 1 | 1 | 1  | 0    | 0           | 0   |
+
 ### Memory Sub-System
 The bus architecture uses **CCEL memory** with:
 - **16-bit addressing** mapped to a 256x256 2D grid
