@@ -47,7 +47,33 @@ The final layer uses an AND gate that takes the outputs from Layer 1:
 | 1 | 1 | 1  | 0    | 0           | 0   |
 
 ### Memory Sub-System
-The bus architecture uses **CCEL memory** with:
+
+Using 1950s magnetic-core memory mechanics and McCulloch-Pitts (MCP) threshold logic for memory.  
+
+In `cell_activate`, the linear combination calculation:  
+$linear = (w_{row} \cdot x_{row}) + (w_{col} \cdot x_{col}) + (w_{depth} \cdot x_{depth}) + bias$
+*(mirrors the exact mathematical model of an MCP neuron)*  
+
+With the default weights set to $1.0f$ and a bias of $-1.5f$:  
+- If only **one** signal is sent (e.g., $1 + 0 + 0 - 1.5 = -0.5$),
+  it stays below `SELECTION_THRESHOLD` ($0.0f$) $\rightarrow$ **Unselected**.  
+- If **two or three** signals coincide (e.g., $1 + 1 + 0 - 1.5 = +0.5$),
+  it crosses the threshold $\rightarrow$ **Selected**.
+*(coincidence detection mapped cleanly onto code)*
+
+**Authentic Magnetic-Core Simulation Mechanics**
+The operations replicate the physical behavior of core memory grids:
+
+1.Coincidence Addressing:
+Just like threading an X, Y, and Z wire through a ferrite bead,  
+a core only flips or reads if all specified coordinate lines carry active signals.  
+
+2. Destructive Read:
+The `cell_read` function captures the state and immediately resets `n->state = cell_NEUTRAL;`,  
+authentically replicating the physical property of magnetic core memory where reading a core clears its magnetic polarization to zero,  
+requiring an immediate write-back or refresh cycle.
+
+3. The bus architecture uses **CCEL memory** with:
 - **16-bit addressing** mapped to a 256x256 2D grid
 - **16 separate CCEL planes**, one per bit, giving 65,536 words of storage
 - **Coincidence detection** for memory selection (requires multiple signals to activate a cell)
@@ -63,7 +89,6 @@ The bus architecture uses **CCEL memory** with:
 - Single bit storage per cell (each CCEL cell stores one trinary state: -1, 0, +1)
 - But for binary logic, we treat NEGATIVE as 0 and POSITIVE as 1
 - Read operations are **destructive** (cell resets to NEUTRAL), requiring immediate refresh
-
 
 **Memory Mapping:**
 - Program     : `0x0000-0x1FFF` (8,192 words)
@@ -109,34 +134,34 @@ The bus architecture uses **CCEL memory** with:
     - Here: int* carries arrays with values 0 or 1, computed through neuron outputs
     - All carries must be computed before sum (no hardware propagation)
 
-7. **CCEL memory is bizarre**
-    1. Coincidence addressing
+7. **CCEL memory is bizarre**  
+    A. **Coincidence addressing**  
     - Classical: one address line selects one location
     - CCEL: requires 2+ of 3 signals active simultaneously
-    - row_signal, col_signal, depth_signal—if only one is active, nothing happens
+    - row_signal, col_signal, depth_signal, if only one is active, nothing happens
     - This is a sparse addressing scheme: most address combos are invalid
     
-    2 Destructive reads
+    B. **Destructive reads**  
     - Classical: reading leaves memory intact
     - CCEL: n->state = CCEL_NEUTRAL after read
     - You must call ccel_refresh() immediately after every read
     - This mirrors 1950s magnetic core memory, not modern RAM
 
-    3.Trinary storage, binary interface
+    C.**Trinary storage, binary interface**  
     - Stores three states: NEGATIVE (-1), NEUTRAL (0), POSITIVE (+1)
     - But bus operates on binary (0/1 bits)
     - For memory, POSITIVE = 1, NEGATIVE = 0, NEUTRAL = "erased" state
     - This means cells can be "partially programmed"
 
-    4. Neural activation for selection
+    D. **Neural activation for selection**  
     - Classical: address decoder selects cell
     - CCEL: the cell computes if it should be selected using MCP math
-    - linear = (w_row×row) + (w_col×col) + (w_depth×depth) + bias
-    - The cell itself decides if you're talking to it—not a decoder
+    - `linear = (w_row×row) + (w_col×col) + (w_depth×depth) + bias`
+    - The cell itself decides if you're talking to it, not a decoder
 
-    5. Bit-sliced planes
+    E. **Bit-sliced planes**  
     - Classical: memory word is stored contiguously
-    - CCEL: Ccel* planes[BUS_DATA_BITS] → one plane per bit
+    - CCEL: `Ccel* planes[BUS_DATA_BITS] → one plane per bit`
     - To read 16-bit word, you must read 16 separate CCEL cells across 16 planes
     - Each read is destructive, requiring 16 refresh operations
     - 16× the overhead for a word operation
@@ -310,38 +335,6 @@ The following opcodes are defined for the CPU but don't execute in the ALU:
 - `OP_HALT` - Stop execution
 
 These will be handled by the CPU control logic when `cpu.c` is implemented.
-
-## CCEL Memory
-
-Using 1950s magnetic-core memory mechanics and McCulloch-Pitts (MCP) threshold logic for memory.  
-
-In `cell_activate`, the linear combination calculation:  
-
-$linear = (w_{row} \cdot x_{row}) + (w_{col} \cdot x_{col}) + (w_{depth} \cdot x_{depth}) + bias$
-
-*(mirrors the exact mathematical model of an MCP neuron)*  
-
-With the default weights set to $1.0f$ and a bias of $-1.5f$:  
-
-- If only **one** signal is sent (e.g., $1 + 0 + 0 - 1.5 = -0.5$),
-  it stays below `SELECTION_THRESHOLD` ($0.0f$) $\rightarrow$ **Unselected**.  
-- If **two or three** signals coincide (e.g., $1 + 1 + 0 - 1.5 = +0.5$),
-  it crosses the threshold $\rightarrow$ **Selected**.
-  
-*(coincidence detection mapped cleanly onto code)*
-
-### Authentic Magnetic-Core Simulation Mechanics
-
-The operations replicate the physical behavior of core memory grids:
-
-**Coincidence Addressing:**  
-Just like threading an X, Y, and Z wire through a ferrite bead,  
-a core only flips or reads if all specified coordinate lines carry active signals.  
-
-**Destructive Read:**  
-The `cell_read` function captures the state and immediately resets `n->state = cell_NEUTRAL;`,  
-authentically replicating the physical property of magnetic core memory where reading a core clears its magnetic polarization to zero,  
-requiring an immediate write-back or refresh cycle.
 
 # Testing Sample codes
 
