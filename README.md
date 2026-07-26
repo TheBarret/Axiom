@@ -61,14 +61,14 @@ With the default weights set to $1.0f$ and a bias of $-1.5f$:
   it crosses the threshold $\rightarrow$ **Selected**.
 *(coincidence detection mapped cleanly onto code)*
 
-**Authentic Magnetic-Core Simulation Mechanics**
+**Authentic Magnetic-Core Simulation Mechanics**  
 The operations replicate the physical behavior of core memory grids:
 
-1.Coincidence Addressing:
+1.Coincidence Addressing:  
 Just like threading an X, Y, and Z wire through a ferrite bead,  
 a core only flips or reads if all specified coordinate lines carry active signals.  
 
-2. Destructive Read:
+2. Destructive Read:  
 The `cell_read` function captures the state and immediately resets `n->state = cell_NEUTRAL;`,  
 authentically replicating the physical property of magnetic core memory where reading a core clears its magnetic polarization to zero,  
 requiring an immediate write-back or refresh cycle.
@@ -79,57 +79,57 @@ requiring an immediate write-back or refresh cycle.
 - **Coincidence detection** for memory selection (requires multiple signals to activate a cell)
 - **Destructive reads** that clear the cell after reading (authentic core memory behavior)
 
-**CCEL Memory Capacity:**
+**CCEL Memory Capacity:**  
 - Each cell is addressed by a 64-bit address: `(depth << 48) | (row << 32) | col`
 - In practice, the bus limits this to **16-bit addressing** (65,536 words) × **16 bits** = **128 KB total**
 - Each of the 16 bus data bits maps to its own CCEL plane
 - The theoretical maximum with the current addressing scheme: **65,536 unique addresses**
 
-**CCEL Memory Minimum Granularity:**
+**CCEL Memory Minimum Granularity:**  
 - Single bit storage per cell (each CCEL cell stores one trinary state: -1, 0, +1)
 - But for binary logic, we treat NEGATIVE as 0 and POSITIVE as 1
 - Read operations are **destructive** (cell resets to NEUTRAL), requiring immediate refresh
 
-**Memory Mapping:**
+**Memory Mapping:**  
 - Program     : `0x0000-0x1FFF` (8,192 words)
 - Data        : `0x2000-0x2FFF` (4,096 words)  
 - Stack       : `0x3000-0x3FFF` (4,096 words)
 - Free        : `0x4000-0xFFDF` (49,152 words)
 - System      : `0xFFE0-0xFFF7` (24 words)
 
-### CPU Features
+### CPU Features  
 - **16-bit ALU** with Kogge-Stone parallel prefix adder
 - **16 opcodes** including arithmetic, logic, memory operations, and control flow
 - **Flag register**: Z (zero), C (carry), OV (overflow), L (less), G (greater)
 - **Signed/unsigned comparison mode** configurable at runtime
 
-## Known Issues / Workarounds
+## Known Issues / Workarounds  
 
-1. **Performance Testing**
+1. **Performance Testing**  
    - Test loops that modify registers drift over iterations
    - Need stable operand tests for accurate measurement
 
-2. **3D Addressing Overlap**
+2. **3D Addressing Overlap**  
    - `depth<<48 | row<<32 | col` has row/depth collision at bit 47
    - Row values above 65,535 corrupt depth addressing
    - Consider explicit masking over simple shifting
 
-3. **Threshold Boundary Handling**
+3. **Threshold Boundary Handling**  
    - Custom weights can produce exactly `0.0` sums
    - Current behavior treats this as "unselected"
    - Need explicit design decision for equality case
 
-4. **Signal Validation**
+4. **Signal Validation**  
    - Relies on `assert` that disappears with `NDEBUG`
    - Invalid signals (e.g., `2`) would silently break the binary model
    - Should use explicit runtime validation
   
-5. **64-bit edge case weirdness**
+5. **64-bit edge case weirdness**  
     - The `mask = (bits == 64) ? ~0ULL : ((1ULL << bits) - 1)` is a C oddity
     - Classical adders don't have to handle shift-edge cases this way
     - Has integer/neural boundary friction
 
-6. **Carries are stored as int arrays**
+6. **Carries are stored as int arrays**  
     - Classical: carry chains are bit-level signals in hardware
     - Here: int* carries arrays with values 0 or 1, computed through neuron outputs
     - All carries must be computed before sum (no hardware propagation)
