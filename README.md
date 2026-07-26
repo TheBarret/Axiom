@@ -51,29 +51,29 @@ The final layer uses an AND gate that takes the outputs from Layer 1:
 Using 1950s magnetic-core memory mechanics and McCulloch-Pitts (MCP) threshold logic for memory.  
 
 In `cell_activate`, the linear combination calculation:  
-$linear = (w_{row} \cdot x_{row}) + (w_{col} \cdot x_{col}) + (w_{depth} \cdot x_{depth}) + bias$
+$linear = (w_{row} \cdot x_{row}) + (w_{col} \cdot x_{col}) + (w_{depth} \cdot x_{depth}) + bias$  
 *(mirrors the exact mathematical model of an MCP neuron)*  
 
 With the default weights set to $1.0f$ and a bias of $-1.5f$:  
-- If only **one** signal is sent (e.g., $1 + 0 + 0 - 1.5 = -0.5$),
+- If only **one** signal is sent (e.g., $1 + 0 + 0 - 1.5 = -0.5$),  
   it stays below `SELECTION_THRESHOLD` ($0.0f$) $\rightarrow$ **Unselected**.  
-- If **two or three** signals coincide (e.g., $1 + 1 + 0 - 1.5 = +0.5$),
-  it crosses the threshold $\rightarrow$ **Selected**.
-*(coincidence detection mapped cleanly onto code)*
+- If **two or three** signals coincide (e.g., $1 + 1 + 0 - 1.5 = +0.5$),  
+  it crosses the threshold $\rightarrow$ **Selected**.  
+*(coincidence detection mapped cleanly onto code)*  
 
 **Authentic Magnetic-Core Simulation Mechanics**  
 The operations replicate the physical behavior of core memory grids:
 
-1.Coincidence Addressing:  
+*Coincidence Addressing:*  
 Just like threading an X, Y, and Z wire through a ferrite bead,  
 a core only flips or reads if all specified coordinate lines carry active signals.  
 
-2. Destructive Read:  
+*Destructive Read:*  
 The `cell_read` function captures the state and immediately resets `n->state = cell_NEUTRAL;`,  
 authentically replicating the physical property of magnetic core memory where reading a core clears its magnetic polarization to zero,  
 requiring an immediate write-back or refresh cycle.
 
-3. The bus architecture uses **CCEL memory** with:
+*The bus architecture uses **CCEL memory** with:*
 - **16-bit addressing** mapped to a 256x256 2D grid
 - **16 separate CCEL planes**, one per bit, giving 65,536 words of storage
 - **Coincidence detection** for memory selection (requires multiple signals to activate a cell)
