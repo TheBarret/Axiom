@@ -1,36 +1,51 @@
 # Axiom
 
-version: 1.0  
-A Threshold Logic Unit C-runtime drop-in building block for a non-Von Neumann cpu model using MCP neurons.  
+### The MCP Neuron Foundation
+Every logic gate in the system is built from MCP neurons:
+- **Inputs** are multiplied by weights and summed with a bias
+- **Output** is 1 if the sum meets or exceeds a threshold, otherwise 0
+- Logic gates (AND, OR, NAND, NOR, NOT, XOR) are constructed using specific weight/threshold combinations
 
-## Downsides Learned
+### Memory Sub-System
+The bus architecture uses **CCEL memory** with:
+- **16-bit addressing** mapped to a 256x256 2D grid
+- **16 separate CCEL planes**, one per bit, giving 65,536 words of storage
+- **Coincidence detection** for memory selection (requires multiple signals to activate a cell)
+- **Destructive reads** that clear the cell after reading (authentic core memory behavior)
 
-**Performance Testing**  
-Any test that modifies its source registers will drift over multiple iterations.   
-We need a method that keeps operands stable while still measuring real execution speed.  
+**Memory Layout:**
+- Program     : `0x0000-0x1FFF` (8,192 words)
+- Data        : `0x2000-0x2FFF` (4,096 words)  
+- Stack       : `0x3000-0x3FFF` (4,096 words)
+- Free        : `0x4000-0xFFDF` (49,152 words)
+- System      : `0xFFE0-0xFFF7` (24 words)
 
-**3D addressing bit overlap**  
-`ccel_init_3d` builds the address as `depth<<48 | row<<32 | col`.  
-Depth starts at bit 48, but row occupies bits 32-47, only 16 bits before it collides with depth.  
-Any `row` value above 65535 will bleed into the depth field and corrupt addressing.  
-If rows are expected to stay small (e.g. a modest grid, fixed 16/16/32 split enforced by masking, not just shifting).
+### CPU Features
+- **16-bit ALU** with Kogge-Stone parallel prefix adder
+- **16 opcodes** including arithmetic, logic, memory operations, and control flow
+- **Flag register**: Z (zero), C (carry), OV (overflow), L (less), G (greater)
+- **Signed/unsigned comparison mode** configurable at runtime
 
-**Strict `>` vs `>=` on the threshold**  
-With the default weights, sums land on {-1.5, -0.5, 0.5, 1.5},  
-never exactly 0.0, so `linear > SELECTION_THRESHOLD` is safe.  
-But `ccel_init_custom` lets a caller pick arbitrary weights/bias,  
-and it's easy to construct a combination where `linear == 0.0` exactly.  
-Right now that resolves to `CCEL_UNSELECTED`, worth deciding explicitly,  
-whether boundary-exact activation should select or not, since custom weights are clearly meant to be used,  
-(the function exists for a reason) and this edge case will eventually get hit.  
+## Known Issues
 
-**Signal validation**  
-Relies on `assert`, `row_signal`/`col_signal`/`depth_signal` are checked with `assert(x == 0 || x == 1)`.  
-If this is ever built with `NDEBUG` (a normal release-mode define), those checks vanish silently,  
-and an out-of-range signal (e.g. `2`) would just get multiplied into the linear sum as any other float, no crash,  
-but a quiet departure from the binary-signal model the whole neuron abstraction depends on.  
-If malformed input is possible from upstream (bus.c driving these lines),  
-you may want an explicit runtime check that survives `NDEBUG`, rather than one that only exists in debug builds.  
+1. **Performance Testing**
+   - Test loops that modify registers drift over iterations
+   - Need stable operand tests for accurate measurement
+
+2. **3D Addressing Overlap**
+   - `depth<<48 | row<<32 | col` has row/depth collision at bit 47
+   - Row values above 65,535 corrupt depth addressing
+   - Consider explicit masking over simple shifting
+
+3. **Threshold Boundary Handling**
+   - Custom weights can produce exactly `0.0` sums
+   - Current behavior treats this as "unselected"
+   - Need explicit design decision for equality case
+
+4. **Signal Validation**
+   - Relies on `assert` that disappears with `NDEBUG`
+   - Invalid signals (e.g., `2`) would silently break the binary model
+   - Should use explicit runtime validation
 
 ## Performance Scaling Consistency
 
