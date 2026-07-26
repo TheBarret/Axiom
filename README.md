@@ -78,7 +78,7 @@ The bus architecture uses **CCEL memory** with:
 - **Flag register**: Z (zero), C (carry), OV (overflow), L (less), G (greater)
 - **Signed/unsigned comparison mode** configurable at runtime
 
-## Known Issues
+## Known Issues / Workarounds
 
 1. **Performance Testing**
    - Test loops that modify registers drift over iterations
@@ -98,6 +98,48 @@ The bus architecture uses **CCEL memory** with:
    - Relies on `assert` that disappears with `NDEBUG`
    - Invalid signals (e.g., `2`) would silently break the binary model
    - Should use explicit runtime validation
+  
+5. **64-bit edge case weirdness**
+    - The `mask = (bits == 64) ? ~0ULL : ((1ULL << bits) - 1)` is a C oddity
+    - Classical adders don't have to handle shift-edge cases this way
+    - Has integer/neural boundary friction
+
+6. **Carries are stored as int arrays**
+    - Classical: carry chains are bit-level signals in hardware
+    - Here: int* carries arrays with values 0 or 1, computed through neuron outputs
+    - All carries must be computed before sum (no hardware propagation)
+
+7. **CCEL memory is bizarre**
+    1. Coincidence addressing
+    - Classical: one address line selects one location
+    - CCEL: requires 2+ of 3 signals active simultaneously
+    - row_signal, col_signal, depth_signal—if only one is active, nothing happens
+    - This is a sparse addressing scheme: most address combos are invalid
+    
+    2 Destructive reads
+    - Classical: reading leaves memory intact
+    - CCEL: n->state = CCEL_NEUTRAL after read
+    - You must call ccel_refresh() immediately after every read
+    - This mirrors 1950s magnetic core memory, not modern RAM
+
+    3.Trinary storage, binary interface
+    - Stores three states: NEGATIVE (-1), NEUTRAL (0), POSITIVE (+1)
+    - But bus operates on binary (0/1 bits)
+    - For memory, POSITIVE = 1, NEGATIVE = 0, NEUTRAL = "erased" state
+    - This means cells can be "partially programmed"
+
+    4. Neural activation for selection
+    - Classical: address decoder selects cell
+    - CCEL: the cell computes if it should be selected using MCP math
+    - linear = (w_row×row) + (w_col×col) + (w_depth×depth) + bias
+    - The cell itself decides if you're talking to it—not a decoder
+
+    5. Bit-sliced planes
+    - Classical: memory word is stored contiguously
+    - CCEL: Ccel* planes[BUS_DATA_BITS] → one plane per bit
+    - To read 16-bit word, you must read 16 separate CCEL cells across 16 planes
+    - Each read is destructive, requiring 16 refresh operations
+    - 16× the overhead for a word operation
 
 ## Performance Scaling Consistency
 
