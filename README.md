@@ -53,7 +53,19 @@ The bus architecture uses **CCEL memory** with:
 - **Coincidence detection** for memory selection (requires multiple signals to activate a cell)
 - **Destructive reads** that clear the cell after reading (authentic core memory behavior)
 
-**Memory Layout:**
+**CCEL Memory Capacity:**
+- Each cell is addressed by a 64-bit address: `(depth << 48) | (row << 32) | col`
+- In practice, the bus limits this to **16-bit addressing** (65,536 words) × **16 bits** = **128 KB total**
+- Each of the 16 bus data bits maps to its own CCEL plane
+- The theoretical maximum with the current addressing scheme: **65,536 unique addresses**
+
+**CCEL Memory Minimum Granularity:**
+- Single bit storage per cell (each CCEL cell stores one trinary state: -1, 0, +1)
+- But for binary logic, we treat NEGATIVE as 0 and POSITIVE as 1
+- Read operations are **destructive** (cell resets to NEUTRAL), requiring immediate refresh
+
+
+**Memory Mapping:**
 - Program     : `0x0000-0x1FFF` (8,192 words)
 - Data        : `0x2000-0x2FFF` (4,096 words)  
 - Stack       : `0x3000-0x3FFF` (4,096 words)
