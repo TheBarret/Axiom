@@ -26,17 +26,6 @@ In the Axiom framework, every logic gate in the system is built from MCP neurons
 - Free        : `0x4000-0xFFDF` (49,152 words)
 - System      : `0xFFE0-0xFFF7` (24 words)
 
-## Performance Scaling Consistency
-
-| Iterations | ADD Ops/sec | MUL Ops/sec | Observed |
-|------------|-------------|-------------|-------------|
-| 100 | 34,795 | 13,891 | warm-up |
-| 1,000 | 36,948 | 15,000 | Stabilizing |
-| 5,000 | 36,335 | 15,030 | Stable |
-| 10,000 | 36,656 | 15,109 | Stable |
-| 50,000 | 36,546 | 15,027 | Stable |
-see performance log: [perf.txt](perf.txt)
-
 ## Files
 
 | File | Role |
@@ -116,6 +105,16 @@ Each logic gate is implemented as an MCP neuron with specific weights and thresh
 - First layer computes OR and NAND, second layer ANDs them together
 
 ## Designing a Fast Adder
+
+Performance Scaling Consistency:
+| Iterations | ADD Ops/sec | MUL Ops/sec | Observed |
+|------------|-------------|-------------|-------------|
+| 100 | 34,795 | 13,891 | warm-up |
+| 1,000 | 36,948 | 15,000 | Stabilizing |
+| 5,000 | 36,335 | 15,030 | Stable |
+| 10,000 | 36,656 | 15,109 | Stable |
+| 50,000 | 36,546 | 15,027 | Stable |
+see performance log: [perf.txt](perf.txt)
 
 Step 1: Compute `G = A & B, P = A XOR B`  
 
