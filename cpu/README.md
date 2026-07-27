@@ -203,14 +203,24 @@ Set mode via: `alu_set_cmp_mode(&alu, 1)` (signed) or `alu_set_cmp_mode(&alu, 0)
 
 ## System Calls (OP_SYS)
 
-| ID | Name | Description | Parameters |
-|----|------|-------------|------------|
-| 0x0 | SYS_PUTC | Print character | `R[rd]` → putchar(R[rd] & 0xFF) |
-| 0x1 | SYS_GETC | Read character | `R[rd]` = getchar() or SYS_EOF_SENTINEL |
-| 0x2 | SYS_PUTN | Print unsigned decimal | `R[rd]` → printf("%u", R[rd]) |
-| 0x3 | SYS_PUTS | Print string from memory | `R[rd]` = address, prints until 0 word |
-| 0x4 | SYS_EXIT | Halt execution | Program exit |
-| 0x5 | SYS_FLUSH | Flush stdout | `fflush(stdout)` |
+| ID | Name | Parameters | Description |
+|----|------|------------|-------------|
+| 0x0 | SYS_PUTC | R[rd] | putchar(R[rd] & 0xFF) |
+| 0x1 | SYS_GETC | R[rd] | R[rd] = getchar() |
+| 0x2 | SYS_PUTN | R[rd] | printf("%u", R[rd]) |
+| 0x3 | SYS_PUTS | R[rd] | Print string at R[rd] |
+| 0x4 | SYS_EXIT | - | Halt execution with exit code (todo) |
+| 0x5 | SYS_FLUSH | - | fflush(stdout) |
+| **0x6** | **SYS_LD16** | **R[rd], next word** | **Load from 16-bit address** |
+| **0x7** | **SYS_ST16** | **R[rd], next word** | **Store to 16-bit address** |
+| **0x8** | **SYS_LDIND** | **R[rd]** | **Load indirect (address in reg)** |
+| **0x9** | **SYS_STIND** | **R[rd]** | **Store indirect (addr in rd, value in rd+1)** |
+| **0xA** | **SYS_JMP16** | **next word** | **Jump to 16-bit address** |
+| **0xB** | **SYS_CALL** | **next word** | **Call subroutine at 16-bit address** |
+| **0xC** | **SYS_RET** | **-** | **Return from subroutine** |
+| **0xD** | **SYS_PEEK** | **R[rd], next word** | **Read without destructive side-effects** |
+| **0xE** | **SYS_POKE** | **R[rd], next word** | **Write without side-effects** |
+| **0xF** | **SYS_MEMCPY** | **R[rd]=src, R[rd+1]=dst, R[rd+2]=count** | **Block memory copy** |
 
 **SYS Instruction Encoding:**
 - `rd` (bits 11-8): Data register (source for output, destination for input)
