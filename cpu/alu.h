@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "gates.h"
-#include "adder.h"
+#include "../gates.h"
+#include "../adder.h"
 
 typedef enum {
     OP_ADD   = 0x0,
@@ -134,14 +134,12 @@ void comparator_free(Comparator* cmp);
 CmpResult comparator_forward(Comparator* cmp, uint64_t A, uint64_t B);
 
 // --- ALU ---
-// v2: width-generic. v1 was parameterized at init (`alu_init(&alu,
-// bits)`) but alu_forward hardcoded `& 0xFFFF` on every result and
-// `>> 16` for mul overflow, silently truncating anything wider than 16
-// bits regardless of what bits was. v2 computes a mask from `bits` at
-// init and uses it everywhere a width-dependent mask is needed, so the
-// same struct works honestly at 8/16/32/64 bits. The name ALU16 is
-// gone for the same reason -- it advertised a width the code didn't
-// actually enforce consistently.
+// v2: width-generic. v1 was parameterized at init (`alu_init(&alu bits)`)
+// but alu_forward hardcoded `& 0xFFFF` on every result and `>> 16`
+// for mul overflow, silently truncating anything wider than 16 bits
+// regardless of what bits was. v2 computes a mask from `bits` at init
+// and uses it everywhere a width-dependent mask is needed,
+// so the same structure works at 8/16/32/64 bits.
 typedef struct {
     int bits;
     uint64_t mask;

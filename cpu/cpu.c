@@ -92,7 +92,6 @@ void cpu_load_hex(CPU* cpu, const char* hex_string) {
 }
 
 void cpu_sync_registers(CPU* cpu) {
-    printf("cpu_sync_registers(*R_dirty=0)\n");
     for (int i = 0; i < NUM_REGS; i++) {
         if (cpu->R_dirty[i]) {
             bus_write_sysvar(&cpu->bus, i, cpu->R[i]);
@@ -115,7 +114,6 @@ void cpu_sync_registers(CPU* cpu) {
 
 void cpu_sync_all(CPU* cpu) {
     // Mark all dirty, then sync
-    printf("cpu_sync_all(cpu.R_dirty=1)\n");
     for (int i = 0; i < NUM_REGS; i++) {
         cpu->R_dirty[i] = 1;
     }
@@ -160,8 +158,8 @@ void cpu_step(CPU* cpu) {
     cpu_decode(instr, &opcode, &rd, &rs1, &rs2, &imm);
 
     // DEBUG
-    printf("[PC=0x%04X] INSTR=0x%04X OP=%d RD=%d RS1=%d RS2=%d IMM=0x%02X\n",
-            cpu->PC-1, instr, opcode, rd, rs1, rs2, imm);
+    //printf("[PC=0x%04X] INSTR=0x%04X OP=%d RD=%d RS1=%d RS2=%d IMM=0x%02X\n",
+    //        cpu->PC-1, instr, opcode, rd, rs1, rs2, imm);
 
     // 3. Execute
     switch (opcode) {
@@ -427,5 +425,5 @@ void cpu_dump_state(CPU* cpu) {
     cpu_dump_registers(cpu);
     printf("\nMemory Dump (at 0x%04X):\n", bus_read_pc(&cpu->bus));
     bus_dump(&cpu->bus, cpu->PC - 4, 8);
-    bus_dump_sysvars(&cpu->bus);
+    //bus_dump_sysvars(&cpu->bus);
 }
