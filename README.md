@@ -1,4 +1,5 @@
 # Axiom
+Combining neural networks, vintage memory, and modern parallel prefix adders all in one coherent system.  
 
 ### The MCP Neuron Foundation
 
