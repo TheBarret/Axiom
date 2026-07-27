@@ -33,8 +33,8 @@ In the Axiom framework, every logic gate in the system is built from MCP neurons
 | **gates.c** | McCulloch-Pitts neurons: AND, OR, NAND, NOR, NOT, XOR. All logic is computed via weighted sums + threshold. |
 | **adder.c** | Kogge-Stone parallel prefix adder. O(log N) carry propagation. |
 | **alu.c**   | ALU operations with Flag bits: Z, C, OV, L, G. |
-| **ccel.c**   | Coincidence detection, CCEL memory storage. More: [readme](io/README.md) |
-| **cpu.c**   | 16-bit ALU-harnass with bus accessed CCEL memory. More: [readme](cpu/README.md) |
+| **ccel.c**   | Coincidence detection, CCEL memory storage. More: [readme](io/) |
+| **cpu.c**   | 16-bit ALU-harnass with bus accessed CCEL memory. More: [readme](cpu/) |
 | **bus.c** | Owns CCEL memory instance, memory controller. |
 
 ## Solving the XOR Problem
