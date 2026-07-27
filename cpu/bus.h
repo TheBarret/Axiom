@@ -3,9 +3,11 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "ccel.h"
 
-// --- Bus Configuration ---
+// memory cell
+#include "../io/ccel.h"
+
+// Bus Configuration
 #define BUS_DATA_BITS   16
 #define BUS_ADDR_BITS   16
 #define BUS_ROW_BITS    8
@@ -14,7 +16,7 @@
 #define BUS_COLS        (1 << BUS_COL_BITS)   // 256
 #define BUS_ADDR_MASK   0xFFFF
 
-// --- Memory Layout (Word Addresses) ---
+// Memory Layout (Word Addresses)
 #define BUS_PROGRAM_BASE   0x0000
 #define BUS_PROGRAM_SIZE   0x2000   // 8192 words
 #define BUS_DATA_BASE      0x2000
@@ -24,7 +26,7 @@
 #define BUS_FREE_BASE      0x4000
 #define BUS_FREE_SIZE      0xC000   // 49152 words
 
-// --- System Variables ---
+// System Variables
 #define BUS_SYSVAR_BASE    0xFFE0
 #define BUS_SYSVAR_COUNT   24
 #define BUS_SYSVAR_PC      0xFFE0
@@ -33,7 +35,7 @@
 #define BUS_SYSVAR_IR      0xFFE3
 #define BUS_SYSVAR_CYCLES  0xFFE4
 
-// --- Bus Structure ---
+// Bus Structure
 typedef struct {
     Ccel* planes[BUS_DATA_BITS];  // One plane per bit
     uint32_t addr;
@@ -43,17 +45,17 @@ typedef struct {
     uint8_t wr;
 } Bus;
 
-// --- Initialization ---
+// Initialization
 void bus_init(Bus* bus);
 void bus_free(Bus* bus);
 
-// --- Core Operations ---
+// Core Operations
 uint16_t bus_read(Bus* bus, uint16_t addr);
 void bus_write(Bus* bus, uint16_t addr, uint16_t value);
 void bus_read_block(Bus* bus, uint16_t addr, uint16_t* buffer, uint16_t words);
 void bus_write_block(Bus* bus, uint16_t addr, const uint16_t* buffer, uint16_t words);
 
-// --- System Variables ---
+// System Variables
 uint16_t bus_read_sysvar(Bus* bus, uint8_t idx);
 void bus_write_sysvar(Bus* bus, uint8_t idx, uint16_t value);
 uint16_t bus_read_pc(Bus* bus);
@@ -67,7 +69,7 @@ void bus_write_ir(Bus* bus, uint16_t value);
 uint64_t bus_read_cycles(Bus* bus);
 void bus_write_cycles(Bus* bus, uint64_t value);
 
-// --- Helpers ---
+// Helpers
 static inline void bus_addr_to_rowcol(uint16_t addr, uint32_t* row, uint32_t* col) {
     *row = (addr >> BUS_COL_BITS) & (BUS_ROWS - 1);
     *col = addr & (BUS_COLS - 1);
@@ -93,7 +95,7 @@ static inline bool bus_is_sysvar_space(uint16_t addr) {
     return (addr >= BUS_SYSVAR_BASE && addr < BUS_SYSVAR_BASE + BUS_SYSVAR_COUNT);
 }
 
-// --- Diagnostic ---
+// Diagnostic
 void bus_dump(Bus* bus, uint16_t start, uint16_t words);
 void bus_clear(Bus* bus, uint16_t start, uint16_t words);
 void bus_dump_sysvars(Bus* bus);
