@@ -76,7 +76,6 @@ void bus_free(Bus* bus) {
 uint16_t bus_read(Bus* bus, uint16_t addr) {
     assert(bus != NULL);
     assert(bus_is_valid_addr(addr));
-
     bus->addr = addr;
     bus->rd = 1;
     bus->wr = 0;
@@ -88,7 +87,6 @@ uint16_t bus_read(Bus* bus, uint16_t addr) {
 void bus_write(Bus* bus, uint16_t addr, uint16_t value) {
     assert(bus != NULL);
     assert(bus_is_valid_addr(addr));
-
     bus->addr = addr;
     bus->data_out = value;
     bus->rd = 0;
@@ -102,7 +100,6 @@ void bus_read_block(Bus* bus, uint16_t addr, uint16_t* buffer, uint16_t words) {
     assert(buffer != NULL);
     assert(bus_is_valid_addr(addr));
     assert(addr + words <= BUS_ROWS * BUS_COLS);
-
     for (uint16_t i = 0; i < words; i++) {
         buffer[i] = bus_read(bus, addr + i);
     }
@@ -211,7 +208,6 @@ void bus_clear(Bus* bus, uint16_t start, uint16_t words) {
 }
 
 void bus_dump_sysvars(Bus* bus) {
-    printf("System Variables:\n");
     for (int i = 0; i < 16; i++) {
         printf("  R%-2d: 0x%04X\n", i, bus_read_sysvar(bus, i));
     }
