@@ -75,7 +75,7 @@ clears its magnetic polarization to zero, requiring an immediate write-back or r
 
 ## Known Issues / Workarounds
 
-### **1. Performance Testing** *(RESOLVED - Documentation updated)*
+### **1. Performance Testing** *(RESOLVED)*
 - Test loops that modify registers drift over iterations
 - Need stable operand tests for accurate measurement
 - **Fix:** Performance testing methodology clarified with stable operand tests.  
@@ -86,9 +86,10 @@ clears its magnetic polarization to zero, requiring an immediate write-back or r
 ### **2. 3D Addressing Overlap** *(RESOLVED - CCEL union addressing)*
 - `depth<<48 | row<<32 | col` had row/depth collision at bit 47
 - Row values above 65,535 corrupt depth addressing
-- **Fix:** Replaced bit-shifting with a `CcelAddress` union that cleanly separates col (32-bit), row (16-bit), and depth (16-bit). No bit-shifting math means zero risk of overflow or bit 47 collisions.
+- **Fix:** Replaced bit-shifting with a `CcelAddress` union that cleanly separates col (32-bit), row (16-bit), and depth (16-bit).
+  No bit-shifting math means zero risk of overflow or bit 47 collisions.  
 
-**How:** 
+**Example:** 
 ```c
 typedef union {
     uint64_t raw;
@@ -105,9 +106,10 @@ typedef union {
 ### **3. Threshold Boundary Handling** *(RESOLVED - Symmetrical MCP logic)*
 - Custom weights could produce exactly `0.0` sums
 - Treated as "unselected" with `>` operator
-- **Fix:** Changed `linear > SELECTION_THRESHOLD` to `linear >= SELECTION_THRESHOLD`. This is the mathematically correct behavior for McCulloch-Pitts neurons and elegantly resolves the `0.0` boundary edge case.
+- **Fix:** Changed `linear > SELECTION_THRESHOLD` to `linear >= SELECTION_THRESHOLD`.
+  This is the mathematically correct behavior for McCulloch-Pitts neurons and elegantly resolves the `0.0` boundary edge case.
 
-**How:** The neuron now fires when `linear >= 0.0` instead of `linear > 0.0`, making the decision boundary closed and symmetrical.
+*(The neuron now fires when `linear >= 0.0` instead of `linear > 0.0`, making the decision boundary closed and symmetrical.)*
 
 ---
 
@@ -116,7 +118,6 @@ typedef union {
 - Invalid signals (e.g., `2`) would silently break the binary model
 - **Fix:** Changed all signal parameters to `bool`. The C compiler automatically truncates any rogue integer input to strictly `0` or `1`. This completely neutralizes the "Invalid signals silently break the model" issue without adding a single runtime `if` statement or macro check.
 
-**How:** 
 ```c
 // Before
 CcelSelection ccel_activate(const Ccel* n, int row_signal, int col_signal, int depth_signal);
@@ -124,7 +125,7 @@ CcelSelection ccel_activate(const Ccel* n, int row_signal, int col_signal, int d
 // After  
 CcelSelection ccel_activate(const Ccel* n, bool row_signal, bool col_signal, bool depth_signal);
 ```
-Any integer passed to a `bool` parameter is strictly converted to 0 or 1 at compile-time.
+*(Any integer passed to a `bool` parameter is strictly converted to 0 or 1 at compile-time.)*
 
 ---
 
@@ -140,7 +141,7 @@ static inline uint64_t ccel_get_mask(int bits) {
 }
 ```
 
-**How:** The function now explicitly handles the edge cases before attempting any shift, eliminating UB.
+*(The function now explicitly handles the edge cases before attempting any shift, eliminating UB.)*
 
 ---
 
@@ -194,6 +195,7 @@ Bit-packing or using MCP neurons directly for carry generation, but the current 
 - To read 16-bit word, you must read 16 separate CCEL cells across 16 planes
 - Each read is destructive, requiring 16 refresh operations
 - 16× the overhead for a word operation
-- **Status:** Known performance characteristic. This maps directly to magnetic core memory where each bit is a separate core. Future optimizations could include word-addressed CCEL cells.
+- **Status:** Known performance characteristic. This maps directly to magnetic core memory where each bit is a separate core.
+  Future optimizations could include word-addressed CCEL cells.
 
 ---
