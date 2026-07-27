@@ -217,8 +217,6 @@ Set mode via: `alu_set_cmp_mode(&alu, 1)` (signed) or `alu_set_cmp_mode(&alu, 0)
 
 ---
 
----
-
 ## Complete Test Program
 
 ```c
@@ -246,7 +244,8 @@ uint16_t test_program[] = {
 ```
 ---
 
-**System Variables:**
+### System Variables
+
 | Address | Name | Description |
 |---------|------|-------------|
 | 0xFFE0 | PC | Program Counter |
@@ -255,40 +254,6 @@ uint16_t test_program[] = {
 | 0xFFE3 | IR | Instruction Register |
 | 0xFFE4-0xFFE7 | CYCLES | Cycle Counter (64-bit) |
 | 0xFFE8-0xFFF7 | RESERVED | Future use |
-
-## Instruction Quick Reference Card
-
-### ALU Operations
-```
-ADD Rd, Rs1, Rs2    # Rd = Rs1 + Rs2
-SUB Rd, Rs1, Rs2    # Rd = Rs1 - Rs2
-AND Rd, Rs1, Rs2    # Rd = Rs1 & Rs2
-OR  Rd, Rs1, Rs2    # Rd = Rs1 | Rs2
-XOR Rd, Rs1, Rs2    # Rd = Rs1 ^ Rs2
-MUL Rd, Rs1, Rs2    # Rd = Rs1 * Rs2
-CMP Rs1, Rs2        # Compare, set flags
-```
-
-### Immediate Loads
-```
-LDI Rd, Imm4        # Rd = Imm4 (4-bit zero-extended)
-LDI16 Rd, Imm16     # Rd = Imm16 (2-word immediate)
-```
-
-### Memory Operations
-```
-LD Rd, Addr8        # Rd = MEM[Addr8]
-ST Rs1, Addr8       # MEM[Addr8] = Rs1
-```
-
-### Control Flow
-```
-JMP Addr8           # PC = Addr8
-JZ Addr8            # if Z: PC = Addr8
-JNZ Addr8           # if !Z: PC = Addr8
-HALT                # Stop execution
-SYS SysId, Rd       # System call (SysId in Rs1)
-```
 
 ### System Calls
 
@@ -311,7 +276,8 @@ SYS SysId, Rd       # System call (SysId in Rs1)
 | **0xE** | **SYS_POKE** | **R[rd], next word** | **Write without side-effects** |
 | **0xF** | **SYS_MEMCPY** | **R[rd]=src, R[rd+1]=dst, R[rd+2]=count** | **Block memory copy** |
 
-**SYS Instruction Encoding:**
+### SYS Instruction Encoding
+
 - `rd` (bits 11-8): Data register (source for output, destination for input)
 - `rs1` (bits 7-4): Syscall ID
 - `rs2` (bits 3-0): Reserved (unused)
