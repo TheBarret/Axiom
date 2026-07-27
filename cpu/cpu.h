@@ -35,26 +35,24 @@ typedef struct {
     uint8_t flags_dirty;
 } CPU;
 
-// --- Initialization ---
+// Initialization
 void cpu_init(CPU* cpu);
 void cpu_free(CPU* cpu);
 
-// --- Program Loading ---
+// Program Loading
 void cpu_load_program(CPU* cpu, const uint16_t* program, uint16_t size);
 void cpu_load_hex(CPU* cpu, const char* hex_string);
 
-// --- Execution ---
+// Execution
 void cpu_step(CPU* cpu);
 void cpu_run(CPU* cpu);
 void cpu_reset(CPU* cpu);
 
-// --- Register Access ---
-uint16_t cpu_read_reg(CPU* cpu, uint8_t idx);
-void cpu_write_reg(CPU* cpu, uint8_t idx, uint16_t value);
+// Register Access
 void cpu_sync_registers(CPU* cpu);
 void cpu_sync_all(CPU* cpu);
 
-// --- Debug ---
+// Debug
 void cpu_dump_state(CPU* cpu);
 void cpu_dump_registers(CPU* cpu);
 
