@@ -75,11 +75,9 @@ clears its magnetic polarization to zero, requiring an immediate write-back or r
 
 ## Known Issues / Workarounds
 
-### **1. Performance Testing** *(RESOLVED)*
+### **1. Performance Testing** *(Open)*
 - Test loops that modify registers drift over iterations
 - Need stable operand tests for accurate measurement
-- **Fix:** Performance testing methodology clarified with stable operand tests.  
-  The 36k+ ops/sec measurements now use proper benchmarking harness with loop unrolling and register-stable patterns.  
 
 ---
 
