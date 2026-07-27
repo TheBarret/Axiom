@@ -1,4 +1,4 @@
-# Axiom CPU Reference Manual
+# Axiom CPU Model
 
 - **LDI16** is a **2-word instruction** - the immediate value is fetched from the next memory word
 - **All ALU operations** are computed every cycle, then mux-selected (compute-all model)
@@ -7,6 +7,22 @@
 - **Default comparison mode** is signed (can be changed via `alu_set_cmp_mode`)
 - **System calls** use `rs1` for syscall ID and `rd` for data register
 - **EOF sentinel** for SYS_GETC is `0xFFFF` (invalid character code)
+
+## Memory Map (CCEL/BUS)
+
+```
+┌─────────────────────────────────────┐
+│ 0x0000 - 0x1FFF  Program Memory     │ 8,192 words
+├─────────────────────────────────────┤
+│ 0x2000 - 0x2FFF  Data Memory        │ 4,096 words
+├─────────────────────────────────────┤
+│ 0x3000 - 0x3FFF  Stack Memory       │ 4,096 words
+├─────────────────────────────────────┤
+│ 0x4000 - 0xFFDF  Free Space         │ 49,152 words
+├─────────────────────────────────────┤
+│ 0xFFE0 - 0xFFF7  System Variables   │ 24 words
+└─────────────────────────────────────┘
+```
 
 ## Instruction Encoding
 
@@ -229,22 +245,6 @@ uint16_t test_program[] = {
 };
 ```
 ---
-
-## Memory Map
-
-```
-┌─────────────────────────────────────┐
-│ 0x0000 - 0x1FFF  Program Memory     │ 8,192 words
-├─────────────────────────────────────┤
-│ 0x2000 - 0x2FFF  Data Memory        │ 4,096 words
-├─────────────────────────────────────┤
-│ 0x3000 - 0x3FFF  Stack Memory       │ 4,096 words
-├─────────────────────────────────────┤
-│ 0x4000 - 0xFFDF  Free Space         │ 49,152 words
-├─────────────────────────────────────┤
-│ 0xFFE0 - 0xFFF7  System Variables   │ 24 words
-└─────────────────────────────────────┘
-```
 
 **System Variables:**
 | Address | Name | Description |
