@@ -1,6 +1,6 @@
 // marcos.h
-#ifndef AXIOMATIC_H
-#define AXIOMATIC_H
+#ifndef MACROS_H
+#define MACROS_H
 
 #include <stdint.h>
 
@@ -79,6 +79,6 @@
 
 // Program Markers
 #define HALT()              ((0xF << 12))
-#define ORG(addr)           // Not implemented, just for readability
+#define ORG(addr)           // TODO
 
-#endif // AXIOMATIC_H
+#endif // MACROS_H
