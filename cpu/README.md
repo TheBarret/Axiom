@@ -27,6 +27,33 @@ All instructions are **16-bit** with the following format:
 
 ---
 
+## CPU Cycle Diagram
+
+```
+    ┌─────────────────────────────────────────────────────────────┐
+    │                    CPU Loop                                 │
+    │                                                             │
+    │  1. ALU computes result & flags                             │
+    │     ↓                                                       │
+    │  2. CPU stores result in R[n] (cached)                      │
+    │     CPU.flags = alu.flags                                   │
+    │     cpu->R_dirty[n] = 1                                     │
+    │     cpu->flags_dirty = 1  ← Not written yet!                │
+    │     ↓                                                       │
+    │  3. Continue executing...                                   │
+    │     ↓                                                       │
+    │  4. On halt or sync request:                                │
+    │     cpu_sync_all() → flags_pack() → bus_write_flags()       │
+    │     ↓                                                       │
+    │  5. bus_write_flags() → bus_write() → bus_tick()            │
+    │     ↓                                                       │
+    │  6. bus_tick() writes to CCEL planes at addr 0xFFE2         │
+    │     ↓                                                       │
+    │  7. CCEL memory: 16 bits written across 16 CCEL cells       │
+    │     Each bit stored in a separate trinary CCEL cell         │
+    └─────────────────────────────────────────────────────────────┘
+```
+
 ## Opcode Table
 
 | Opcode | Value | Format | Operation | Flags Set |
