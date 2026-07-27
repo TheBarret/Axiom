@@ -12,6 +12,41 @@ In the Axiom framework, every logic gate in the system is built from MCP neurons
 - **Output** is 1 if the sum meets or exceeds a threshold, otherwise 0
 - Logic gates (AND, OR, NAND, NOR, NOT, XOR) are constructed using specific weight/threshold combinations
 
+### CPU Features  
+- **16-bit ALU** with Kogge-Stone parallel prefix adder
+- **16 opcodes** including arithmetic, logic, memory operations, and control flow
+- **Flag register**: Z (zero), C (carry), OV (overflow), L (less), G (greater)
+- **Signed/unsigned comparison mode** configurable at runtime
+
+**Memory Mapping:**  
+- Program     : `0x0000-0x1FFF` (8,192 words)
+- Data        : `0x2000-0x2FFF` (4,096 words)  
+- Stack       : `0x3000-0x3FFF` (4,096 words)
+- Free        : `0x4000-0xFFDF` (49,152 words)
+- System      : `0xFFE0-0xFFF7` (24 words)
+
+## Performance Scaling Consistency
+
+| Iterations | ADD Ops/sec | MUL Ops/sec | Observed |
+|------------|-------------|-------------|-------------|
+| 100 | 34,795 | 13,891 | warm-up |
+| 1,000 | 36,948 | 15,000 | Stabilizing |
+| 5,000 | 36,335 | 15,030 | Stable |
+| 10,000 | 36,656 | 15,109 | Stable |
+| 50,000 | 36,546 | 15,027 | Stable |
+see performance log: [perf.txt](perf.txt)
+
+## Files
+
+| File | Role |
+|------|------|
+| **gates.c** | McCulloch-Pitts neurons: AND, OR, NAND, NOR, NOT, XOR. All logic is computed via weighted sums + threshold. |
+| **adder.c** | Kogge-Stone parallel prefix adder. O(log N) carry propagation. |
+| **alu.c**   | ALU operations with Flag bits: Z, C, OV, L, G. |
+| **ccel.c**   | Coincidence detection, CCEL memory storage. |
+| **cpu.c**   | 16-bit ALU-harnass with bus accessed CCEL memory. |
+| **bus.c** | Owns CCEL memory instance, memory controller. |
+
 ## Solving the XOR Problem
 
 The XOR function is famously not linearly separable, meaning it cannot be solved by a single McCulloch-Pitts neuron (a single threshold unit).  
@@ -90,19 +125,6 @@ requiring an immediate write-back or refresh cycle.
 - But for binary logic, we treat NEGATIVE as 0 and POSITIVE as 1
 - Read operations are **destructive** (cell resets to NEUTRAL), requiring immediate refresh
 
-**Memory Mapping:**  
-- Program     : `0x0000-0x1FFF` (8,192 words)
-- Data        : `0x2000-0x2FFF` (4,096 words)  
-- Stack       : `0x3000-0x3FFF` (4,096 words)
-- Free        : `0x4000-0xFFDF` (49,152 words)
-- System      : `0xFFE0-0xFFF7` (24 words)
-
-### CPU Features  
-- **16-bit ALU** with Kogge-Stone parallel prefix adder
-- **16 opcodes** including arithmetic, logic, memory operations, and control flow
-- **Flag register**: Z (zero), C (carry), OV (overflow), L (less), G (greater)
-- **Signed/unsigned comparison mode** configurable at runtime
-
 ## Known Issues / Workarounds  
 
 1. **Performance Testing**  
@@ -165,28 +187,6 @@ requiring an immediate write-back or refresh cycle.
     - To read 16-bit word, you must read 16 separate CCEL cells across 16 planes
     - Each read is destructive, requiring 16 refresh operations
     - 16× the overhead for a word operation
-
-## Performance Scaling Consistency
-
-| Iterations | ADD Ops/sec | MUL Ops/sec | Observed |
-|------------|-------------|-------------|-------------|
-| 100 | 34,795 | 13,891 | warm-up |
-| 1,000 | 36,948 | 15,000 | Stabilizing |
-| 5,000 | 36,335 | 15,030 | Stable |
-| 10,000 | 36,656 | 15,109 | Stable |
-| 50,000 | 36,546 | 15,027 | Stable |
-see performance log: [perf.txt](perf.txt)
-
-## Files
-
-| File | Role |
-|------|------|
-| **gates.c** | McCulloch-Pitts neurons: AND, OR, NAND, NOR, NOT, XOR. All logic is computed via weighted sums + threshold. |
-| **adder.c** | Kogge-Stone parallel prefix adder. O(log N) carry propagation. |
-| **alu.c**   | ALU operations with Flag bits: Z, C, OV, L, G. |
-| **ccel.c**   | Coincidence detection, CCEL memory storage. |
-| **cpu.c**   | 16-bit ALU-harnass with bus accessed CCEL memory. |
-| **bus.c** | Owns CCEL memory instance, memory controller. |
 
 ## Designing Neuron Gates
 
