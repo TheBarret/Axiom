@@ -115,7 +115,8 @@ typedef union {
 ### **4. Signal Validation** *(RESOLVED - Type-safe bool API)*
 - Relied on `assert` that disappears with `NDEBUG`
 - Invalid signals (e.g., `2`) would silently break the binary model
-- **Fix:** Changed all signal parameters to `bool`. The C compiler automatically truncates any rogue integer input to strictly `0` or `1`. This completely neutralizes the "Invalid signals silently break the model" issue without adding a single runtime `if` statement or macro check.
+- **Fix:** Changed all signal parameters to `bool`. The C compiler automatically truncates any rogue integer input to strictly `0` or `1`.
+  This completely neutralizes the "Invalid signals silently break the model" issue without adding a single runtime `if` statement or macro check.
 
 ```c
 // Before
@@ -158,7 +159,7 @@ Bit-packing or using MCP neurons directly for carry generation, but the current 
 
 ## CCEL Memory: Design Notes
 
-### 7. **CCEL memory is bizarre** *(BEHAVIOR DOCUMENTED)*
+### 7. **CCEL memory is bizarre**
 
 **A. Coincidence addressing** *(UNCHANGED - Feature, not bug)*
 - Classical: one address line selects one location
@@ -167,28 +168,28 @@ Bit-packing or using MCP neurons directly for carry generation, but the current 
 - This is a sparse addressing scheme: most address combos are invalid
 - **Status:** This is intentional MCP neuron behavior, implementing coincidence detection per the magnetic core memory model
 
-**B. Destructive reads** *(UNCHANGED - Authentic behavior)*
+**B. Destructive reads**
 - Classical: reading leaves memory intact
 - CCEL: `n->state = CCEL_NEUTRAL` after read
 - You must call `ccel_refresh()` immediately after every read
 - This mirrors 1950s magnetic core memory, not modern RAM
 - **Status:** Authentic core memory simulation - documented as intended behavior
 
-**C. Trinary storage, binary interface** *(UNCHANGED - Design decision)*
+**C. Trinary storage, binary interface**
 - Stores three states: NEGATIVE (-1), NEUTRAL (0), POSITIVE (+1)
 - But bus operates on binary (0/1 bits)
 - For memory, POSITIVE = 1, NEGATIVE = 0, NEUTRAL = "erased" state
 - This means cells can be "partially programmed"
 - **Status:** Documented behavior. The trinary state allows for erasure (NEUTRAL) and has potential for future ternary logic experiments.
 
-**D. Neural activation for selection** *(UNCHANGED - Core feature)*
+**D. Neural activation for selection**
 - Classical: address decoder selects cell
 - CCEL: the cell computes if it should be selected using MCP math
 - `linear = (w_row×row) + (w_col×col) + (w_depth×depth) + bias`
 - The cell itself decides if you're talking to it, not a decoder
 - **Status:** This is the fundamental innovation of the CCEL memory - neuron-based selection
 
-**E. Bit-sliced planes** *(UNCHANGED - Design tradeoff)*
+**E. Bit-sliced planes**
 - Classical: memory word is stored contiguously
 - CCEL: `Ccel* planes[BUS_DATA_BITS] → one plane per bit`
 - To read 16-bit word, you must read 16 separate CCEL cells across 16 planes
