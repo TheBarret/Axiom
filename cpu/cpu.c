@@ -91,19 +91,8 @@ void cpu_load_hex(CPU* cpu, const char* hex_string) {
     (void)hex_string;
 }
 
-// Register Access (with dirty tracking)
-uint16_t cpu_read_reg(CPU* cpu, uint8_t idx) {
-    assert(idx < NUM_REGS);
-    return cpu->R[idx];
-}
-
-void cpu_write_reg(CPU* cpu, uint8_t idx, uint16_t value) {
-    assert(idx < NUM_REGS);
-    cpu->R[idx] = value;
-    cpu->R_dirty[idx] = 1;  // Mark dirty for sync
-}
-
 void cpu_sync_registers(CPU* cpu) {
+    printf("cpu_sync_registers(*R_dirty=0)\n");
     for (int i = 0; i < NUM_REGS; i++) {
         if (cpu->R_dirty[i]) {
             bus_write_sysvar(&cpu->bus, i, cpu->R[i]);
@@ -126,6 +115,7 @@ void cpu_sync_registers(CPU* cpu) {
 
 void cpu_sync_all(CPU* cpu) {
     // Mark all dirty, then sync
+    printf("cpu_sync_all(cpu.R_dirty=1)\n");
     for (int i = 0; i < NUM_REGS; i++) {
         cpu->R_dirty[i] = 1;
     }
@@ -170,8 +160,8 @@ void cpu_step(CPU* cpu) {
     cpu_decode(instr, &opcode, &rd, &rs1, &rs2, &imm);
 
     // DEBUG
-    //printf("[PC=0x%04X] INSTR=0x%04X OP=%d RD=%d RS1=%d RS2=%d IMM=0x%02X\n",
-    //        cpu->PC-1, instr, opcode, rd, rs1, rs2, imm);
+    printf("[PC=0x%04X] INSTR=0x%04X OP=%d RD=%d RS1=%d RS2=%d IMM=0x%02X\n",
+            cpu->PC-1, instr, opcode, rd, rs1, rs2, imm);
 
     // 3. Execute
     switch (opcode) {
@@ -243,7 +233,7 @@ void cpu_step(CPU* cpu) {
         case OP_SYS: {
             // rs1 = syscall ID, rd = data register
             uint8_t sys_id = rs1;
-
+            uint8_t data_reg = rd;
             switch (sys_id) {
                 case SYS_PUTC:
                     putchar((int)(cpu->R[rd] & 0xFF));
@@ -279,6 +269,90 @@ void cpu_step(CPU* cpu) {
                 case SYS_FLUSH:
                     fflush(stdout);
                     break;
+
+                case SYS_LD16: {
+                    // Fetch the 16-bit address from next word
+                    uint16_t addr16 = cpu_fetch(cpu);
+                    cpu->R[data_reg] = bus_read(&cpu->bus, addr16);
+                    cpu->R_dirty[data_reg] = 1;
+                    break;
+                }
+
+                case SYS_ST16: {
+                    uint16_t addr16 = cpu_fetch(cpu);
+                    bus_write(&cpu->bus, addr16, cpu->R[data_reg]);
+                    break;
+                }
+
+                case SYS_LDIND: {
+                    // Load indirect: address is in data_reg
+                    uint16_t addr = cpu->R[data_reg];
+                    cpu->R[data_reg] = bus_read(&cpu->bus, addr);
+                    cpu->R_dirty[data_reg] = 1;
+                    break;
+                }
+
+                case SYS_STIND: {
+                    // Store indirect: address in data_reg, value in next register
+                    uint16_t addr = cpu->R[data_reg];
+                    uint16_t value = cpu->R[(data_reg + 1) & 0xF]; // Use next register
+                    bus_write(&cpu->bus, addr, value);
+                    break;
+                }
+
+                case SYS_JMP16: {
+                    uint16_t addr16 = cpu_fetch(cpu);
+                    cpu->PC = addr16;
+                    cpu->PC_dirty = 1;
+                    break;
+                }
+
+                case SYS_CALL: {
+                    // Push PC to stack
+                    uint16_t addr16 = cpu_fetch(cpu);
+                    cpu->SP--;
+                    bus_write(&cpu->bus, cpu->SP, cpu->PC);
+                    cpu->SP_dirty = 1;
+                    cpu->PC = addr16;
+                    cpu->PC_dirty = 1;
+                    break;
+                }
+
+                case SYS_RET: {
+                    // Pop PC from stack
+                    uint16_t ret_addr = bus_read(&cpu->bus, cpu->SP);
+                    cpu->SP++;
+                    cpu->SP_dirty = 1;
+                    cpu->PC = ret_addr;
+                    cpu->PC_dirty = 1;
+                    break;
+                }
+
+                case SYS_PEEK: {
+                    // Non-destructive read (doesn't clear CCEL cell)
+                    uint16_t addr16 = cpu_fetch(cpu);
+                    // Bus read is always destructive in your architecture
+                    // But we can read and immediately refresh
+                    uint16_t value = bus_read(&cpu->bus, addr16);
+                    // bus_read already does destructive read + refresh
+                    // So PEEK is the same as LD16 in your architecture
+                    cpu->R[data_reg] = value;
+                    cpu->R_dirty[data_reg] = 1;
+                    break;
+                }
+
+                case SYS_MEMCPY: {
+                    // Block copy: src in R[data_reg], dst in R[data_reg+1], count in R[data_reg+2]
+                    uint16_t src = cpu->R[data_reg];
+                    uint16_t dst = cpu->R[(data_reg + 1) & 0xF];
+                    uint16_t count = cpu->R[(data_reg + 2) & 0xF];
+
+                    for (uint16_t i = 0; i < count; i++) {
+                        uint16_t value = bus_read(&cpu->bus, src + i);
+                        bus_write(&cpu->bus, dst + i, value);
+                    }
+                    break;
+                }
 
                 default:
                     fprintf(stderr, "CPU: Unknown syscall 0x%X at PC=0x%04X\n",
@@ -351,6 +425,7 @@ void cpu_dump_registers(CPU* cpu) {
 
 void cpu_dump_state(CPU* cpu) {
     cpu_dump_registers(cpu);
-    printf("\nMemory Dump (at PC offset):\n");
+    printf("\nMemory Dump (at 0x%04X):\n", bus_read_pc(&cpu->bus));
     bus_dump(&cpu->bus, cpu->PC - 4, 8);
+    bus_dump_sysvars(&cpu->bus);
 }
