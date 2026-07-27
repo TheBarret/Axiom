@@ -4,38 +4,20 @@
 #include <assert.h>
 #include "gates.h"
 #include "adder.h"
-#include "cpu.h"
-
-/*
-  Testers:
-  - Gates
-  - Adder
-  - Cpu
-  - Bus
-  - Memory
-*/
+#include "cpu/cpu.h"
 
 // Test program
 uint16_t test_program[] = {
-    // Load test values
     0x7105,  // LDI R1, 5
     0x7203,  // LDI R2, 3
     0x7307,  // LDI R3, 7
-    // ADD: R0 = R1 + R2 = 5 + 3 = 8
-    0x0012,  // ADD R0, R1, R2
-    // SUB: R0 = R0 - R2 = 8 - 3 = 5
-    0x1102,  // SUB R0, R0, R2
-    // AND: R0 = R0 & R3 = 5 & 7 = 5
-    0x2103,  // AND R0, R0, R3
-    // OR:  R0 = R0 | R2 = 5 | 3 = 7
-    0x3102,  // OR  R0, R0, R2
-    // XOR: R0 = R0 ^ R3 = 7 ^ 7 = 0
-    0x4103,  // XOR R0, R0, R3
-    // MUL: R0 = R1 * R2 = 5 * 3 = 15
-    0x5012,  // MUL R0, R1, R2
-    // CMP: Compare R0 (15) vs R3 (7)
-    0x6103,  // CMP R0, R3   (flags: Z=0, L=0, G=1)
-    // HALT
+    0x0012,  // ADD R0, R1, R2 (ADD: R0 = R1 + R2 = 5 + 3 = 8)
+    0x1102,  // SUB R0, R0, R2 (SUB: R0 = R0 - R2 = 8 - 3 = 5)
+    0x2103,  // AND R0, R0, R3 (AND: R0 = R0 & R3 = 5 & 7 = 5)
+    0x3102,  // OR  R0, R0, R2 (OR:  R0 = R0 | R2 = 5 | 3 = 7)
+    0x4103,  // XOR R0, R0, R3 (XOR: R0 = R0 ^ R3 = 7 ^ 7 = 0)
+    0x5012,  // MUL R0, R1, R2 (MUL: R0 = R1 * R2 = 5 * 3 = 15)
+    0x6103,  // CMP R0, R3   (CMP: Compare R0 (15) vs R3 (7), flags: Z=0, L=0, G=1)
     0xF000   // HALT
 };
 
@@ -340,15 +322,12 @@ void test_adder_kogge_stone_carries() {
 void test_adder_debug_output() {
     Adder adder;
     adder_init(&adder, 4);
-
     uint64_t result;
-    adder_forward(&adder, 5, 3, 0, &result);
 
-    printf("\nDebug start\n");
+    adder_forward(&adder, 5, 3, 0, &result);
     adder_debug(&adder, "5+3=8");
 
     adder_free(&adder);
-    printf("Debug end\n");
 }
 
 void test_cpu() {
@@ -358,8 +337,8 @@ void test_cpu() {
     printf("Loading program...\n");
     cpu_load_program(&cpu, test_program, sizeof(test_program) / sizeof(uint16_t));
 
-    printf("Initial state:\n");
-    cpu_dump_registers(&cpu);
+    //printf("Initial state:\n");
+    //cpu_dump_registers(&cpu);
 
     printf("\nExecuting...\n");
     cpu_run(&cpu);
@@ -367,27 +346,27 @@ void test_cpu() {
     printf("\nFinal state:\n");
     cpu_dump_state(&cpu);
 
+
     cpu_free(&cpu);
 }
 
 int main() {
-    /*
+    /* printf("\n***********************************************\n");
     printf("* * Testing: Axiom Gates...\n");
-
     test_gate_forward_single();
     test_gate_init();
     test_not_gate();
     test_gate_forward_batched();
     test_xor_gate();
-    */
-
+    printf("\n***********************************************\n");
     printf("\n* * Testing: Axiom Adders...\n");
     test_adder_basic_operations();
     test_adder_with_carry_in();
     test_adder_bit_widths();
     test_adder_kogge_stone_carries();
     test_adder_debug_output();
-
+    */
+    printf("\n***********************************************\n");
     printf("\n* * Testing: Axiom Cpu...\n");
     test_cpu();
 

@@ -144,7 +144,7 @@ int adder_forward(Adder* adder, uint64_t A, uint64_t B, int cin, uint64_t* resul
 }
 
 void adder_debug(Adder* adder, const char* label) {
-    fprintf(stderr, "-- Adder debug: %s (bits=%d) --\n", label ? label : "", adder->bits);
+    fprintf(stderr, "Running: %s (bits=%d)\n", label ? label : "", adder->bits);
 
     fprintf(stderr, "  A_bits : ");
     for (int i = adder->bits - 1; i >= 0; i--) fprintf(stderr, "%d", adder->A_bits[i]);
