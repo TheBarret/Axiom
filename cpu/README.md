@@ -201,42 +201,6 @@ Set mode via: `alu_set_cmp_mode(&alu, 1)` (signed) or `alu_set_cmp_mode(&alu, 0)
 
 ---
 
-## System Calls (OP_SYS)
-
-| ID | Name | Parameters | Description |
-|----|------|------------|-------------|
-| 0x0 | SYS_PUTC | R[rd] | putchar(R[rd] & 0xFF) |
-| 0x1 | SYS_GETC | R[rd] | R[rd] = getchar() |
-| 0x2 | SYS_PUTN | R[rd] | printf("%u", R[rd]) |
-| 0x3 | SYS_PUTS | R[rd] | Print string at R[rd] |
-| 0x4 | SYS_EXIT | - | Halt execution with exit code (todo) |
-| 0x5 | SYS_FLUSH | - | fflush(stdout) |
-| **0x6** | **SYS_LD16** | **R[rd], next word** | **Load from 16-bit address** |
-| **0x7** | **SYS_ST16** | **R[rd], next word** | **Store to 16-bit address** |
-| **0x8** | **SYS_LDIND** | **R[rd]** | **Load indirect (address in reg)** |
-| **0x9** | **SYS_STIND** | **R[rd]** | **Store indirect (addr in rd, value in rd+1)** |
-| **0xA** | **SYS_JMP16** | **next word** | **Jump to 16-bit address** |
-| **0xB** | **SYS_CALL** | **next word** | **Call subroutine at 16-bit address** |
-| **0xC** | **SYS_RET** | **-** | **Return from subroutine** |
-| **0xD** | **SYS_PEEK** | **R[rd], next word** | **Read without destructive side-effects** |
-| **0xE** | **SYS_POKE** | **R[rd], next word** | **Write without side-effects** |
-| **0xF** | **SYS_MEMCPY** | **R[rd]=src, R[rd+1]=dst, R[rd+2]=count** | **Block memory copy** |
-
-**SYS Instruction Encoding:**
-- `rd` (bits 11-8): Data register (source for output, destination for input)
-- `rs1` (bits 7-4): Syscall ID
-- `rs2` (bits 3-0): Reserved (unused)
-
-**Example:**
-```
-0xE000  // SYS PUTC, R0  (print character in R0)
-0xE110  // SYS GETC, R1  (read character into R1)
-0xE220  // SYS PUTN, R2  (print R2 as decimal)
-0xE330  // SYS PUTS, R3  (print string at address in R3)
-0xE400  // SYS EXIT      (halt)
-0xE500  // SYS FLUSH     (flush stdout)
-```
-
 ---
 
 ## Complete Test Program
@@ -264,33 +228,6 @@ uint16_t test_program[] = {
     0xF000   // HALT
 };
 ```
-
-**Execution Trace:**
-
-| PC | Instruction | Operation | Result |
-|----|-------------|-----------|--------|
-| 0x0000 | `0x7105` | LDI R1, 5 | R1=5 |
-| 0x0001 | `0x7203` | LDI R2, 3 | R2=3 |
-| 0x0002 | `0x7307` | LDI R3, 7 | R3=7 |
-| 0x0003 | `0x0012` | ADD R0, R1, R2 | R0=8 |
-| 0x0004 | `0x1102` | SUB R1, R0, R2 | R1=5 |
-| 0x0005 | `0x2103` | AND R1, R0, R3 | R1=0, Z=1 |
-| 0x0006 | `0x3102` | OR R1, R0, R2 | R1=11, Z=0 |
-| 0x0007 | `0x4103` | XOR R1, R0, R3 | R1=15 |
-| 0x0008 | `0x5012` | MUL R0, R1, R2 | R0=45 |
-| 0x0009 | `0x6103` | CMP R0, R3 | Flags: Z=0, L=0, G=1 |
-| 0x000A | `0xF000` | HALT | Stop |
-
-**Final State:**
-```
-R0 = 45  (0x002D)
-R1 = 15  (0x000F)
-R2 = 3   (0x0003)
-R3 = 7   (0x0007)
-
-Flags: Z=0, C=0, OV=0, L=0, G=1
-```
-
 ---
 
 ## Memory Map
@@ -354,13 +291,29 @@ SYS SysId, Rd       # System call (SysId in Rs1)
 ```
 
 ### System Calls
-```
-SYS PUTC, Rd        # putchar(Rd & 0xFF)
-SYS GETC, Rd        # Rd = getchar()
-SYS PUTN, Rd        # print Rd as decimal
-SYS PUTS, Rd        # print string at address Rd
-SYS EXIT, Rd        # halt with exit code in Rd
-SYS FLUSH, Rd       # fflush(stdout)
-```
+
+| ID | Name | Parameters | Description |
+|----|------|------------|-------------|
+| 0x0 | SYS_PUTC | R[rd] | putchar(R[rd] & 0xFF) |
+| 0x1 | SYS_GETC | R[rd] | R[rd] = getchar() |
+| 0x2 | SYS_PUTN | R[rd] | printf("%u", R[rd]) |
+| 0x3 | SYS_PUTS | R[rd] | Print string at R[rd] |
+| 0x4 | SYS_EXIT | - | Halt execution with exit code (todo) |
+| 0x5 | SYS_FLUSH | - | fflush(stdout) |
+| **0x6** | **SYS_LD16** | **R[rd], next word** | **Load from 16-bit address** |
+| **0x7** | **SYS_ST16** | **R[rd], next word** | **Store to 16-bit address** |
+| **0x8** | **SYS_LDIND** | **R[rd]** | **Load indirect (address in reg)** |
+| **0x9** | **SYS_STIND** | **R[rd]** | **Store indirect (addr in rd, value in rd+1)** |
+| **0xA** | **SYS_JMP16** | **next word** | **Jump to 16-bit address** |
+| **0xB** | **SYS_CALL** | **next word** | **Call subroutine at 16-bit address** |
+| **0xC** | **SYS_RET** | **-** | **Return from subroutine** |
+| **0xD** | **SYS_PEEK** | **R[rd], next word** | **Read without destructive side-effects** |
+| **0xE** | **SYS_POKE** | **R[rd], next word** | **Write without side-effects** |
+| **0xF** | **SYS_MEMCPY** | **R[rd]=src, R[rd+1]=dst, R[rd+2]=count** | **Block memory copy** |
+
+**SYS Instruction Encoding:**
+- `rd` (bits 11-8): Data register (source for output, destination for input)
+- `rs1` (bits 7-4): Syscall ID
+- `rs2` (bits 3-0): Reserved (unused)
 
 ---
