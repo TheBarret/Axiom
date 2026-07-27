@@ -129,7 +129,7 @@ CcelSelection ccel_activate(const Ccel* n, bool row_signal, bool col_signal, boo
 
 ---
 
-### **5. 64-bit edge case weirdness** *(RESOLVED - Guarded shift)*
+### **5. 64-bit edge case weirdness**
 - `mask = (bits == 64) ? ~0ULL : ((1ULL << bits) - 1)` was a C oddity
 - Shifting by 64 bits is undefined behavior in C
 - **Fix:** Added a guarded mask function:
@@ -145,7 +145,7 @@ static inline uint64_t ccel_get_mask(int bits) {
 
 ---
 
-### **6. Carries are stored as int arrays** *(Design decision)*
+### **6. Carries are stored as int arrays**
 - Classical: carry chains are bit-level signals in hardware
 - Here: `int*` carries arrays with values 0 or 1, computed through neuron outputs
 - All carries must be computed before sum (no hardware propagation)
@@ -161,7 +161,7 @@ Bit-packing or using MCP neurons directly for carry generation, but the current 
 
 ### 7. **CCEL memory is bizarre**
 
-**A. Coincidence addressing** *(UNCHANGED - Feature, not bug)*
+**A. Coincidence addressing**
 - Classical: one address line selects one location
 - CCEL: requires 2+ of 3 signals active simultaneously
 - row_signal, col_signal, depth_signal, if only one is active, nothing happens
