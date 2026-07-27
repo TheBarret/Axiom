@@ -84,8 +84,9 @@ clears its magnetic polarization to zero, requiring an immediate write-back or r
 ### **2. 3D Addressing Overlap** *(RESOLVED - CCEL union addressing)*
 - `depth<<48 | row<<32 | col` had row/depth collision at bit 47
 - Row values above 65,535 corrupt depth addressing
-- **Fix:** Replaced bit-shifting with a `CcelAddress` union that cleanly separates col (32-bit), row (16-bit), and depth (16-bit).
-  No bit-shifting math means zero risk of overflow or bit 47 collisions.  
+
+*Replaced bit-shifting with a `CcelAddress` union that cleanly separates col (32-bit), row (16-bit), and depth (16-bit).
+No bit-shifting math means zero risk of overflow or bit 47 collisions.*
 
 **Example:** 
 ```c
